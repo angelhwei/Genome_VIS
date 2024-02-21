@@ -1,0 +1,30 @@
+span {
+    font-size: 1.2rem;
+}
+#chr_name {
+    font-weight: bolder;
+}
+mat-form-field {
+    // margin-right: 10px;
+    height: 100%;
+    width: 150px;
+    box-sizing: border-box;
+}
+.btn {
+    height: 56px;
+    box-sizing: border-box;
+}
+.container {
+    border-radius: 5px;
+    display: flex;
+    justify-content: start;
+    height: auto;
+    padding-top: 18px;
+    gap: 10px;
+}
+mat-accordion {
+    position: sticky;
+    top: 0; // Adjust as needed
+    // position: fixed;
+    z-index: 100;
+}

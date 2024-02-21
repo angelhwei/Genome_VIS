@@ -1,0 +1,24 @@
+<app-navbar></app-navbar>
+
+<div class="container">
+    <div class="barchart-container span9" #container>
+        <div class="title">Chromosome Barchart</div>
+        <div>
+            <app-scaffold-barchart #svgComponent></app-scaffold-barchart>
+        </div>
+    </div>
+
+    <div class="sequence-container span9-2">
+        <app-scaffold-sequence #svgComponent2></app-scaffold-sequence>
+    </div>
+
+    <div class="gene-exp-container span3">
+        <div class="title">Gene Expression</div>
+        <div class="map">
+            <app-map></app-map>
+        </div>
+        <div class="pc">
+            <app-gene-expression></app-gene-expression>
+        </div>
+    </div>
+</div>
