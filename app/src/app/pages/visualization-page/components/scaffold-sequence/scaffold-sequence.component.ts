@@ -9,8 +9,9 @@ import { MatNativeDateModule } from '@angular/material/core'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { ShareService } from '../../../../services/share.service'
 import { DataService } from '../../../../services/data.service'
-import { FormsModule } from '@angular/forms';
-
+import { FormsModule } from '@angular/forms'
+import { FormControl, ReactiveFormsModule } from '@angular/forms'
+import { ThemePalette } from '@angular/material/core'
 
 @Component({
     selector: 'app-scaffold-sequence',
@@ -24,15 +25,17 @@ import { FormsModule } from '@angular/forms';
         MatExpansionModule,
         MatNativeDateModule,
         FormsModule,
+        ReactiveFormsModule,
     ],
     templateUrl: './scaffold-sequence.component.html',
     styleUrl: './scaffold-sequence.component.scss',
 })
 export class ScaffoldSequenceComponent {
+    colorControl = new FormControl('warn' as ThemePalette)
     @Input() width!: number
     squareWidth: number = 10
     compressionNum: number = 1000
-    scaffold!: string;
+    scaffold!: string
 
     constructor(private shareService: ShareService, private dataService: DataService) {}
 
@@ -40,13 +43,14 @@ export class ScaffoldSequenceComponent {
         this.shareService.currentData.subscribe(data => {
             if (data) {
                 this.scaffold = data.scaffold
+                this.handleData()
             }
         })
-        this.handleData()
     }
 
     handleClick() {
-      this.handleData();
+        d3.select('#content2').text('') // Clear the content
+        this.handleData()
     }
 
     drawCircle(
@@ -86,6 +90,8 @@ export class ScaffoldSequenceComponent {
             .style('color', '#fff')
             .style('border-radius', '5px')
             .style('padding', '5px')
+            .style('pointer-events', 'none')
+            .style('z-index', '100')
 
         // Add event handlers
         circle
@@ -94,7 +100,7 @@ export class ScaffoldSequenceComponent {
                 tooltip
                     .html(details)
                     .style('left', event.pageX + 2 + 'px')
-                    .style('top', event.pageY + 2 + 'px')
+                    .style('top', event.pageY - 2 + 'px')
 
                 d3.select(event.target).style('stroke', '#c02425').style('stroke-width', '2px')
             })
@@ -205,14 +211,15 @@ export class ScaffoldSequenceComponent {
             .style('class', 'tooltip')
             .style('padding', '10px')
             .style('opacity', 0)
-            .style('pointer-events', 'none');  // Add this line
+            .style('pointer-events', 'none')
+            .style('z-index', '100')
 
         // Add event handlers
         rectangle
             .on('mouseover', function (event: any) {
                 tooltip.transition().duration(200).style('opacity', 1)
                 tooltip.html(details)
-                tooltip.style('left', event.pageX + 10 + 'px').style('top', event.pageY + 15 + 'px')
+                tooltip.style('left', event.pageX + 10 + 'px').style('top', event.pageY - 35 + 'px')
             })
             .on('mouseout', function () {
                 tooltip.transition().duration(200).style('opacity', 0)
@@ -224,17 +231,20 @@ export class ScaffoldSequenceComponent {
 
     handleData() {
         this.dataService.fetchData().then(data => {
-            // console.log(data)
-            let width = 1000
-            if (this.width) {
-                width = this.width - 100
-                console.log('width:' + this.width)
-            }
-            let margin = { top: 20, right: 30, bottom: 60, left: 90 }
             let squareWidth = this.squareWidth
             let compressionNum = this.compressionNum
             let scaffold = this.scaffold
             let squareHeight = squareWidth
+            // console.log(data)
+            let width = 1000
+            if (this.width) {
+                squareWidth <= 5
+                    ? (width = this.width - 10 * 10)
+                    : (width = this.width - 10 * squareWidth)
+            }
+            let margin = { top: 20, right: 30, bottom: 60, left: 90 }
+
+            console.log('scaffold:' + scaffold)
 
             // gene's location
             let X = 0
@@ -252,10 +262,16 @@ export class ScaffoldSequenceComponent {
             // mutation circle size
             let muRadius = squareWidth * 2
 
+            let svgWidth = width + 5 * squareWidth
+
+            if (squareWidth <= 5) {
+                svgWidth += 50
+            }
+
             let svg = d3
                 .select('#content2')
                 .append('svg')
-                .attr('width', width + 100)
+                .attr('width', svgWidth)
                 .attr('transform', `translate(${margin.left - 60},${margin.top})`)
 
             let lastPosition = 0
@@ -324,7 +340,7 @@ export class ScaffoldSequenceComponent {
                             squareWidth,
                             squareHeight,
                             genomeColorL1,
-                            `Name: ${geneName} &nbsp Start: ${start} &nbsp End: ${end}`,
+                            `Gene: ${geneName} &nbsp Start: ${start} &nbsp End: ${end}`,
                             last,
                             lastPosition
                         )

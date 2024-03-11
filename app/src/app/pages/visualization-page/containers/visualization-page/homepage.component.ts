@@ -12,6 +12,8 @@ import { MatButtonModule } from '@angular/material/button'
 import { MatTooltipModule } from '@angular/material/tooltip'
 import { MatExpansionModule } from '@angular/material/expansion'
 import { MatNativeDateModule } from '@angular/material/core'
+// import { FormControl, ReactiveFormsModule } from '@angular/forms'
+import { ThemePalette } from '@angular/material/core'
 
 @Component({
     selector: 'app-homepage',
@@ -30,14 +32,19 @@ import { MatNativeDateModule } from '@angular/material/core'
         MatTooltipModule,
         MatExpansionModule,
         MatNativeDateModule,
+
     ],
     templateUrl: './homepage.component.html',
     styleUrl: './homepage.component.scss',
 })
 export class HomepageComponent implements AfterViewInit {
+    // colorControl = new FormControl('warn' as ThemePalette)
     @ViewChild('svgComponent') svgComponent!: ScaffoldBarchartComponent
     @ViewChild('svgComponent2') svgComponent2!: ScaffoldSequenceComponent
     @ViewChild('container') container!: ElementRef
+
+    @ViewChild('svgComponent3') svgComponent3!: GeneExpressionComponent
+    @ViewChild('container2') container2!: ElementRef
 
     ngAfterViewInit() {
         this.updateWidth()
@@ -50,8 +57,12 @@ export class HomepageComponent implements AfterViewInit {
 
     updateWidth() {
         if (this.svgComponent && this.container) {
+            console.log(this.svgComponent3)
             this.svgComponent.width = this.container.nativeElement.offsetWidth
+            this.svgComponent.height = this.container.nativeElement.offsetHeight
             this.svgComponent2.width = this.container.nativeElement.offsetWidth
+            this.svgComponent3.width = this.container2.nativeElement.offsetWidth
+            this.svgComponent3.height = this.container2.nativeElement.offsetHeight
         }
     }
 }

@@ -1,5 +1,9 @@
-/* You can add global styles to this file, and also import other style files */
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@300&display=swap");
+@use '@angular/material' as mat;
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300&display=swap');
+
+.dense-2 {
+    @include mat.all-component-densities(-2);
+}
 
 html,
 body,
@@ -81,17 +85,18 @@ summary,
 time,
 mark,
 audio,
-video {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  font: inherit;
-  vertical-align: baseline;
-  font-family: "Quicksand", sans-serif;
+video,
+input {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+    font-family: 'Quicksand', sans-serif;
 }
 
 body {
-  overflow: hidden;
-  // background-color: #e8e8e8;
+    overflow: hidden;
+    background-color: #f9f7f3;
 }

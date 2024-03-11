@@ -1,14 +1,22 @@
 <google-map
-  height="300px"
-  width="100%"
-  [zoom]="zoom"
-  [center]="center"
+    height="100%"
+    width="100%"
+    [zoom]="zoom"
+    [center]="center"
+    [options]="{
+        mapTypeControl: false,
+        fullscreenControl: false,
+        keyboardShortcuts: false,
+        disableDefaultUI: true
+    }"
 >
-<map-marker
-    *ngFor="let marker of markers"
-    [position]="marker.position"
-    [label]="marker.label"
-    [title]="marker.title"
-  >
-  </map-marker>
+    <div *ngFor="let marker of markers">
+        <map-marker
+            #markerElem
+            [position]="marker.position"
+            [options]="getIconOptions(marker)"
+            (mapClick)="onMarkerClick(marker)"
+        >
+        </map-marker>
+    </div>
 </google-map>

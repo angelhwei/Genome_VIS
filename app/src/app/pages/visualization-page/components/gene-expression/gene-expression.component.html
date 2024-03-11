@@ -1,2 +1,19 @@
-<div id="filter"></div>
-<div id="PC"></div>
+<div class="filter-container">
+    <div class="item map">
+        <h4 class="filter-title">Choose location</h4>
+        <app-map (pinClicked)="onPinClicked($event)"></app-map>
+    </div>
+    <div class="item filter">
+        <h4 class="filter-title">Choose condition</h4>
+        <div id="filter"></div>
+        <div class="empty-text" id="empty-condition-text">
+          <h4>Please add location.</h4>
+      </div>
+    </div>
+</div>
+<div id="pc-container">
+    <div id="PC"></div>
+    <div class="empty-text" id="empty-pc-text">
+        <p>Please add conditions.</p>
+    </div>
+</div>

@@ -6,21 +6,24 @@
 
 .barchart-container,
 .sequence-container,
-.map-container,
+.map-container {
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+    border-radius: 1rem;
+    overflow-y: auto;
+}
 .gene-exp-container {
     box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2);
     background-color: #fff;
-    border-radius: 10px;
-    overflow-y: auto;
+    border-radius: 1rem;
 }
-
 .container {
     height: 95vh;
     display: grid;
     padding: 1%;
     grid:
-        'span9 span9 span9 span9 span9 span9 span9 span9 span9 span3 span3 span3' 4fr
-        'span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span3 span3 span3' 7fr
+        'span9 span9 span9 span9 span9 span9 span9 span9 span3 span3 span3 span3' 4fr
+        'span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span3 span3 span3 span3' 7fr
         / 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
     gap: 15px;
 }
@@ -38,24 +41,77 @@
     grid-area: span3-2;
 }
 
-.map {
-    padding: 5px;
-}
-
 .pc {
     padding: 5px;
 }
 
 .title {
+    width: 50%;
     padding: 10px;
     font-size: min(1.2vw, 2rem);
-    font-weight: 900;
+    color: #6c757d;
+    margin: 0.5rem;
 }
 
-.barchart-container, .sequence-container {
+.title.editable {
+    border: none;
+}
+
+.editable {
+    cursor: pointer;
+}
+
+.editable:hover {
+    transition: all 0.3s ease-in-out;
+    transform: translateY(-3px);
+    color: black;
+    font-weight: 1000;
+}
+
+.barchart-container,
+.sequence-container {
     z-index: 100;
+    // background-color: #eaeaea;
 }
 
-.map {
-    z-index: 0;
+.sequence-container::-webkit-scrollbar {
+    display: none;
+}
+
+.barchart-container {
+    overflow-y: hidden;
+}
+
+:host ::ng-deep .mdc-text-field--outlined {
+    --mdc-outlined-text-field-container-shape: 28px;
+}
+
+.rename-container {
+    display: flex;
+    align-items: center;
+    right: 0.5rem;
+}
+
+.name-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-right: 1rem;
+    height: 4rem;
+}
+
+.btn {
+    height: 48px;
+    box-sizing: border-box;
+    color: black;
+    margin-top: 0.1rem;
+    border-radius: 28px;
+}
+
+mat-form-field {
+    height: auto;
+    width: 200px;
+    box-sizing: border-box;
+    margin-right: 0.5rem;
+    margin-top: 1.5rem;
 }

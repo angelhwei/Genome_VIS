@@ -1,76 +1,42 @@
-<mat-accordion class="example-headers-align">
-    <mat-expansion-panel hideToggle>
-        <mat-expansion-panel-header>
-            <mat-panel-title>
-                <span>Scaffold:</span>&nbsp;<span id="chr_name"></span>
-            </mat-panel-title>
-            <mat-panel-description>
-                Sequence setting
-                <mat-icon></mat-icon>
-            </mat-panel-description>
-        </mat-expansion-panel-header>
-        <div class="container">
-            <mat-form-field>
-                <mat-label>Square size</mat-label>
-                <input
-                    matInput
-                    type="number"
-                    id="square-size-input"
-                    min="1"
-                    max="100"
-                    [(ngModel)]="squareWidth"
-                />
-            </mat-form-field>
-            <mat-form-field>
-                <mat-label>Compression degree</mat-label>
-                <input
-                    matInput
-                    type="number"
-                    id="compression-input"
-                    min="10"
-                    max="10000"
-                    [(ngModel)]="compressionNum"
-                />
-            </mat-form-field>
+<div class="form">
+    <div class="form-title"><span>Scaffold:</span>&nbsp;<span id="chr_name"></span></div>
+    <div class="container">
+        <mat-form-field appearance="outline" [color]="colorControl.value!" class="dense-2">
+            <mat-label>Square size</mat-label>
+            <input
+                matInput
+                type="number"
+                id="square-size-input"
+                min="1"
+                max="100"
+                [(ngModel)]="squareWidth"
+            />
+        </mat-form-field>
+        <mat-form-field appearance="outline" [color]="colorControl.value!" class="dense-2">
+            <mat-label>Compression</mat-label>
+            <input
+                matInput
+                type="number"
+                id="compression-input"
+                min="10"
+                max="10000"
+                [(ngModel)]="compressionNum"
+            />
+        </mat-form-field>
+        <div>
             <button
                 class="btn"
-                mat-raised-button
+                mat-flat-button
                 matTooltip="zoom in and zoom out!"
                 (click)="handleClick()"
             >
                 Update
             </button>
         </div>
-    </mat-expansion-panel>
-</mat-accordion>
-<!-- <div class="setting container">
-  <div id="scaffold-name">
-    <span>Scaffold:</span><span id="chr_name"></span>
-  </div>
-  <mat-form-field>
-    <mat-label>Square size</mat-label>
-    <input
-      matInput
-      type="number"
-      id="square-size-input"
-      min="1"
-      max="100"
-      value="10"
-    />
-  </mat-form-field>
-  <mat-form-field>
-    <mat-label>Compression degree</mat-label>
-    <input
-      matInput
-      type="number"
-      id="compression-input"
-      min="100"
-      max="10000"
-      value="1000"
-    />
-  </mat-form-field>
-  <button class="btn" mat-raised-button matTooltip="zoom in and zoom out!">
-    Update
-  </button>
-</div> -->
-<div class="sequence" id="content2"></div>
+    </div>
+</div>
+<div class="sequence" id="content2">
+    <div class="empty-text">
+        <p>Clicking the above barchart to show sequence details.</p>
+    </div>
+</div>

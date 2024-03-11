@@ -1,30 +1,55 @@
-span {
-    font-size: 1.2rem;
-}
 #chr_name {
     font-weight: bolder;
 }
 mat-form-field {
-    // margin-right: 10px;
-    height: 100%;
+    height: auto;
     width: 150px;
     box-sizing: border-box;
+    margin-right: 0.5rem;
+    margin-top: 1.5rem;
 }
 .btn {
-    height: 56px;
+    height: 48px;
     box-sizing: border-box;
+    color: black;
+    margin-top: 0.1rem;
+    border-radius: 28px;
+}
+.form {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 4rem;
+    background-color: #f5f3f4;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding-left: 0.5rem;
+
+    &-title {
+        padding: 0.7rem;
+        font-size: min(1.2vw, 2rem);
+        font-weight: 800;
+        margin-right: 10px;
+        background-color: #e07a5f;
+        border-radius: 28px;
+        padding: 0.8rem;
+        color: #f9f7f3;
+    }
 }
 .container {
-    border-radius: 5px;
     display: flex;
-    justify-content: start;
-    height: auto;
-    padding-top: 18px;
-    gap: 10px;
+    align-items: center;
+    position: absolute;
+    right: 0.5rem;
 }
-mat-accordion {
-    position: sticky;
-    top: 0; // Adjust as needed
-    // position: fixed;
-    z-index: 100;
+.empty-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 45vh;
+    color: #adb5bd;
+}
+:host ::ng-deep .mdc-text-field--outlined {
+    --mdc-outlined-text-field-container-shape: 28px;
 }

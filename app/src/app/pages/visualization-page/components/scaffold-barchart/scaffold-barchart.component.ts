@@ -13,7 +13,7 @@ import { ShareService } from '../../../../services/share.service'
 export class ScaffoldBarchartComponent implements OnInit {
     @Output() dataEmitter = new EventEmitter<any>()
     @Input() width!: number
-
+    @Input() height!: number
     data: any
     constructor(private dataService: DataService, private shareService: ShareService) {}
 
@@ -30,18 +30,19 @@ export class ScaffoldBarchartComponent implements OnInit {
 
     barchart(data: any) {
         let width = 1200
+        let height = 180
         if (this.width) {
             width = this.width
-            console.log('width:' + this.width)
+            height = this.height * 0.7
         }
         let margin = { top: 20, right: 30, bottom: 60, left: 90 },
             barWidth = width - margin.left - margin.right - margin.top,
-            barHeight = 220 - margin.top - margin.bottom
+            barHeight = height - margin.top - margin.bottom
         let svg = d3
             .select('#scaffold-barchart')
             .append('svg')
             .attr('width', width)
-            .attr('height', barHeight + margin.top + margin.bottom + margin.left)
+            .attr('height', height + margin.right + margin.bottom + margin.left)
             .append('g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
         let x = d3
@@ -71,7 +72,7 @@ export class ScaffoldBarchartComponent implements OnInit {
             .selectAll('text')
             .attr('transform', 'translate(-10,0)rotate(-45)')
             .style('text-anchor', 'end')
-            .attr('font-size', '10px')
+            .attr('font-size', '7px')
 
         const tooltip = d3
             .select('#scaffold-barchart')
@@ -83,6 +84,7 @@ export class ScaffoldBarchartComponent implements OnInit {
             .style('class', 'tooltip')
             .style('padding', '10px')
             .style('opacity', 0)
+            .style('pointer-events', 'none')
 
         let lengths = data.map(function (d: any) {
             return d.length
@@ -90,19 +92,16 @@ export class ScaffoldBarchartComponent implements OnInit {
         let maxLen = Math.floor(Math.max(...lengths))
         let y = d3.scaleLog().domain([10000, maxLen]).range([barHeight, 0])
         let yAxis = d3.axisLeft(y).ticks(3)
-        // .tickFormat(function (d: any) {
-        //     return (d / 1000).toString() + 'k' // Divide each tick value by 1000
-        // }) // Set the desired number of ticks on the y-axis
 
         svg.append('g').call(yAxis)
         svg.append('text')
             .attr('transform', 'rotate(-90)')
-            .attr('y', 0 - margin.left) // Adjust the position of the label from the left margin
+            .attr('y', 0 - margin.left + 10 + 'px') // Adjust the position of the label from the left margin
             .attr('x', 0 - barHeight / 2) // Adjust the position of the label from the top
             .attr('dy', '1em')
             .style('text-anchor', 'middle')
             .text('Scaffold Length')
-            .attr('fill', '#3f4f5e')
+            .attr('fill', '#6c757d')
         svg.selectAll('myline')
             .data(data)
             .enter()
@@ -115,23 +114,35 @@ export class ScaffoldBarchartComponent implements OnInit {
             .attr('height', function (d) {
                 return 0
             })
-            .attr('fill', 'grey')
+            .attr('fill', '#BDC3C7')
             .attr('cursor', 'pointer') // Set the cursor to indicate it's clickable
             .on('mouseover', function (event, d: any) {
                 // console.log(d.chromosome);
                 tooltip.transition().duration(200).style('opacity', 1)
                 tooltip.html(`Chr: ${d.chromosome} Length: ${d.length}`)
-                tooltip.style('top', event.pageY + 15 + 'px').style('left', event.pageX + 5 + 'px')
+                tooltip.style('top', event.pageY - 35 + 'px').style('left', event.pageX + 5 + 'px')
 
-                d3.select(this).style('fill', '#c02425')
+                d3.select(this).style('fill', '#e07a5f')
             })
             .on('mouseout', function () {
                 tooltip.transition().duration(200).style('opacity', 0)
-                d3.select(this).style('fill', 'grey')
+                d3.select(this).style('fill', '#BDC3C7')
             })
             .on('click', function (event, d: any) {
+                // Remove any existing images
+                d3.selectAll('image').remove()
+
+                // Add an image above the clicked bar
+                d3.select('svg') // Select the SVG element
+                    .append('image')
+                    .attr('xlink:href', '../../../../../assets/down.png') // Replace with your image path
+                    .attr('width', 15 + 'px')
+                    .attr('height', 15 + 'px')
+                    .attr('x', (x(d.chromosome) || 0) + 86) // Position the image above the bar (5 is the padding)
+                    .attr('y', y(d.length) - 1) // Position the image above the bar
+
                 d3.selectAll('rect').style('stroke', 'none')
-                d3.select(this).style('stroke-width', '3').style('stroke', '#c02425')
+                d3.select(this).style('stroke-width', '1').style('stroke', '#e07a5f')
 
                 callEmit(10, 1000, d.chromosome)
                 // console.log(d.chromosome);
