@@ -96,7 +96,7 @@ export class ScaffoldSequenceComponent {
         // Add event handlers
         circle
             .on('mouseover', (event: any) => {
-                tooltip.transition().duration(200).style('opacity', 1)
+                tooltip.style('opacity', 1)
                 tooltip
                     .html(details)
                     .style('left', event.pageX + 2 + 'px')
@@ -105,7 +105,7 @@ export class ScaffoldSequenceComponent {
                 d3.select(event.target).style('stroke', '#c02425').style('stroke-width', '2px')
             })
             .on('mouseout', (event: any) => {
-                tooltip.transition().duration(200).style('opacity', 0)
+                tooltip.style('opacity', 0)
                 d3.select(event.target).style('stroke', 'none').style('stroke-width', '0')
             })
     }
@@ -217,12 +217,12 @@ export class ScaffoldSequenceComponent {
         // Add event handlers
         rectangle
             .on('mouseover', function (event: any) {
-                tooltip.transition().duration(200).style('opacity', 1)
+                tooltip.style('opacity', 1)
                 tooltip.html(details)
                 tooltip.style('left', event.pageX + 10 + 'px').style('top', event.pageY - 35 + 'px')
             })
             .on('mouseout', function () {
-                tooltip.transition().duration(200).style('opacity', 0)
+                tooltip.style('opacity', 0)
             })
             .on('click', function () {
                 // parallelCoordinates()

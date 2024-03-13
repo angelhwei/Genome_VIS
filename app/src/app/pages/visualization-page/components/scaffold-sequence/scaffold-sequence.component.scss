@@ -20,7 +20,11 @@ mat-form-field {
     top: 0;
     z-index: 1;
     height: 4rem;
-    background-color: #f5f3f4;
+    // background-color: #f5f3f4;
+    // border-bottom: 0.1rem solid #f5f3f4;
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2);
+    background: rgba(245, 243, 244, 0.5);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     margin: 0;
@@ -49,6 +53,7 @@ mat-form-field {
     align-items: center;
     height: 45vh;
     color: #adb5bd;
+    font-size: 1rem;
 }
 :host ::ng-deep .mdc-text-field--outlined {
     --mdc-outlined-text-field-container-shape: 28px;

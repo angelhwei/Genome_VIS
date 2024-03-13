@@ -21,10 +21,13 @@ export class GeneExpressionComponent implements OnInit {
     @Input() width!: number
     @Input() height!: number
     @Input() pinClicked!: MarkerProperties
+
     clickedPin: MarkerProperties | null = null
     data: any
     selected = [] as string[]
+
     constructor(private geneExpDataService: GeneExpDataService) {}
+
     ngOnInit() {
         this.geneExpDataService.fetchGeneExpData().then(data => {
             // console.log(data);
@@ -40,8 +43,21 @@ export class GeneExpressionComponent implements OnInit {
 
     parallelCoordinates(data: any) {
         const dataColumns = data.columns.length * 3
-        const row = Object.keys(data).length
         const pixelsPerDataPoint = 20
+        const svgContainer = d3.select('#PC')
+        const columnNames = Object.keys(data[0])
+        const empty = document.getElementById('empty-pc-text')
+        const emptyCondition = document.getElementById('empty-condition-text')
+        let dimensions = columnNames
+        let sortAscending: { [key: string]: boolean } = {}
+        let dimensions2: string[] = []
+
+        empty!.style.display = 'flex'
+        empty!.style.justifyContent = 'center'
+        empty!.style.alignItems = 'center'
+        empty!.style.height = '50vh'
+
+        svgContainer.selectAll('*').remove()
 
         // set the dimensions and margins of the graph
         let margin = { top: 25, right: 50, bottom: 25, left: 20 },
@@ -57,10 +73,6 @@ export class GeneExpressionComponent implements OnInit {
                 filter.removeChild(filter.firstChild)
             }
         }
-        var svgContainer = d3.select('#PC')
-        svgContainer.selectAll('*').remove()
-
-        let columnNames = Object.keys(data[0])
 
         if (this.clickedPin?.clicked) {
             const matchingColumns = columnNames.filter(
@@ -70,6 +82,7 @@ export class GeneExpressionComponent implements OnInit {
             )
             this.selected.push(...matchingColumns)
         }
+
         if (!this.clickedPin?.clicked) {
             this.selected = this.selected.filter(
                 (item: string) =>
@@ -77,7 +90,7 @@ export class GeneExpressionComponent implements OnInit {
                     !item.toLowerCase().includes(this.clickedPin.name.toLowerCase())
             )
         }
-        const emptyCondition = document.getElementById('empty-condition-text')
+
         if (this.selected.length !== 0) {
             emptyCondition!.style.display = 'none'
         } else {
@@ -87,15 +100,10 @@ export class GeneExpressionComponent implements OnInit {
             emptyCondition!.style.alignItems = 'center'
             emptyCondition!.style.height = '15vh'
         }
-        let dimensions = columnNames
-        let sortAscending: { [key: string]: boolean } = {}
+
         for (let i in dimensions) {
             sortAscending[dimensions[i]] = true
         }
-        let empty = document.getElementById('empty-pc-text')
-        // drawChart(dimensions)
-
-        let dimensions2: string[] = []
 
         for (let i = 0; i < this.selected.length; i++) {
             let btn = document.createElement('button')
@@ -116,7 +124,6 @@ export class GeneExpressionComponent implements OnInit {
             btn.addEventListener('click', function () {
                 if (!clicked) {
                     dimensions2.push(this.innerHTML)
-                    console.log(dimensions2)
                     this.style.backgroundColor = '#4f6d7a'
                     clicked = true
                 } else {
@@ -140,7 +147,7 @@ export class GeneExpressionComponent implements OnInit {
             })
             if (filter) filter.appendChild(btn)
         }
-        // }
+
         function drawChart(dimensions: any) {
             svgContainer.selectAll('*').remove()
             let svg = d3
@@ -244,31 +251,18 @@ export class GeneExpressionComponent implements OnInit {
                 .style('opacity', 0.5)
                 .style('cursor', 'pointer')
                 .on('mouseover', function (event: any, d: any) {
-                    // first every group turns grey
-                    d3.selectAll('.line')
-                        .transition()
-                        .duration(200)
-                        .style('stroke', 'lightgrey')
-                        .style('opacity', '0.2')
-                    // Second the hovered specie takes its color
-                    // d3.selectAll('.' + selected_species)
-                    //     .transition()
-                    //     .duration(200)
-                    //     .style('stroke', '#53b3bd')
-                    //     .style('opacity', '1')
                     d3.select(this)
-                        .transition()
-                        .duration(200)
                         .style('stroke', '#53b3bd')
                         .style('stroke-width', 4)
                         .style('opacity', '1')
+
                     let tooltipWidth = 200 // Replace with your tooltip width
                     let tooltipHeight = 80
-
                     let container = d3.select('#PC') // Replace with your container selector
                     let containerNode = container.node() as Element
                     let containerRect = containerNode ? containerNode.getBoundingClientRect() : null
-                    tooltip.transition().duration(200).style('opacity', 1)
+
+                    tooltip.style('opacity', 1)
                     tooltip
                         .html(
                             `Gene: ${d.Gene}` +
@@ -296,15 +290,12 @@ export class GeneExpressionComponent implements OnInit {
                 })
                 .on('mouseleave', function () {
                     d3.selectAll('.line')
-                        .transition()
-                        .duration(200)
-                        .delay(1000)
                         .style('stroke', function (d: any) {
                             return color(d.Gene) as string
                         })
                         .style('opacity', '1')
                         .style('stroke-width', 2)
-                    tooltip.transition().duration(200).style('opacity', 0)
+                    tooltip.style('opacity', 0)
                 })
 
             svg.selectAll('myAxis')

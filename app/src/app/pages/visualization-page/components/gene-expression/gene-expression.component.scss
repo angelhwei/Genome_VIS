@@ -38,7 +38,7 @@ h4 {
     position: sticky;
     top: 0;
     border-radius: 1rem;
-    background-color: #f5f3f4;
+    background-color: rgba(245, 243, 244, 0.5);
     box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2);
     display: flex;
     height: 20vh;
@@ -48,7 +48,7 @@ h4 {
 }
 
 .filter-title {
-    background-color: #f5f3f4;
+    background-color: rgba(245, 243, 244, 0.5);
     position: sticky;
     top: 0;
     margin: 0;
@@ -65,4 +65,5 @@ h4 {
     align-items: center;
     height: 50vh;
     color: #adb5bd;
+    font-size: 1rem;
 }
