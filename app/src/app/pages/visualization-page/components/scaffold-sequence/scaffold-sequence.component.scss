@@ -23,7 +23,7 @@ mat-form-field {
     // background-color: #f5f3f4;
     // border-bottom: 0.1rem solid #f5f3f4;
     box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2);
-    background: rgba(245, 243, 244, 0.5);
+    background: rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -31,13 +31,12 @@ mat-form-field {
     padding-left: 0.5rem;
 
     &-title {
-        padding: 0.7rem;
         font-size: min(1.2vw, 2rem);
         font-weight: 800;
         margin-right: 10px;
-        background-color: #e07a5f;
+        background-color: #5c677d;
         border-radius: 28px;
-        padding: 0.8rem;
+        padding: 1rem;
         color: #f9f7f3;
     }
 }
@@ -52,8 +51,8 @@ mat-form-field {
     justify-content: center;
     align-items: center;
     height: 45vh;
-    color: #adb5bd;
-    font-size: 1rem;
+    color: #6c757d;
+    font-size: 0.8rem;
 }
 :host ::ng-deep .mdc-text-field--outlined {
     --mdc-outlined-text-field-container-shape: 28px;

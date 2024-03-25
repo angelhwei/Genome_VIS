@@ -37,8 +37,8 @@ h4 {
 .filter-container {
     position: sticky;
     top: 0;
-    border-radius: 1rem;
-    background-color: rgba(245, 243, 244, 0.5);
+    border-radius: 28px;
+    background-color: #5c677d;
     box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2);
     display: flex;
     height: 20vh;
@@ -48,11 +48,14 @@ h4 {
 }
 
 .filter-title {
-    background-color: rgba(245, 243, 244, 0.5);
+    background-color: #5c677d;
+    border-top-right-radius: 28px;
+    border-top-left-radius: 28px;
     position: sticky;
     top: 0;
     margin: 0;
     margin-bottom: 0.1rem;
+    color: #fff;
 }
 
 .item {
@@ -64,6 +67,13 @@ h4 {
     justify-content: center;
     align-items: center;
     height: 50vh;
-    color: #adb5bd;
-    font-size: 1rem;
+    font-size: 0.8rem;
+}
+
+#empty-pc-text {
+    color: #6c757d;
+}
+
+#empty-condition-text {
+    color: #fff;
 }

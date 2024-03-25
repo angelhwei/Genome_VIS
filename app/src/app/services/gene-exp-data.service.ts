@@ -8,7 +8,7 @@ export class GeneExpDataService {
     constructor() {}
 
     fetchGeneExpData() {
-        return fetch('http://localhost:4200/assets/data/expression-data.csv')
+        return fetch('../../assets/data/expression-data.csv')
             .then(response => response.text())
             .then(data => d3.csvParse(data))
     }

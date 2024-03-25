@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core'
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core'
 import { MapComponent } from '../map/map.component'
 import { GeneExpDataService } from '../../../../services/gene-exp-data.service'
 import * as d3 from 'd3'
@@ -17,23 +17,47 @@ interface MarkerProperties {
     templateUrl: './gene-expression.component.html',
     styleUrl: './gene-expression.component.scss',
 })
-export class GeneExpressionComponent implements OnInit {
+export class GeneExpressionComponent implements OnInit, OnChanges {
     @Input() width!: number
     @Input() height!: number
     @Input() pinClicked!: MarkerProperties
+    @Input() geneDetails!: string
 
     clickedPin: MarkerProperties | null = null
     data: any
-    selected = [] as string[]
+    selected: { name: string; color: string | undefined }[] = []
+    color = '#53b3bd'
+    highlightColor = '#2D929B'
 
     constructor(private geneExpDataService: GeneExpDataService) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.geneExpDataService.fetchGeneExpData().then(data => {
             // console.log(data);
             this.parallelCoordinates(data)
             this.data = data
         })
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['geneDetails']) {
+            console.log('geneDetails: ')
+            console.log(this.geneDetails) // You can see the geneDetails in the console
+            this.updateStrokeColor()
+        }
+    }
+
+    updateStrokeColor() {
+        // 更新 stroke 顏色
+        let geneRename = 'ex-' + this.geneDetails.replace(/[^\w\s]|_/g, '').toLowerCase()
+        d3.selectAll('.line')
+            .style('stroke-width', 1)
+            .style('opacity', 0.1)
+            .style('stroke', this.color)
+        d3.selectAll('.' + geneRename)
+            .style('stroke-width', 4)
+            .style('opacity', 1)
+            .style('stroke', this.highlightColor)
     }
 
     onPinClicked(marker: MarkerProperties) {
@@ -51,6 +75,7 @@ export class GeneExpressionComponent implements OnInit {
         let dimensions = columnNames
         let sortAscending: { [key: string]: boolean } = {}
         let dimensions2: string[] = []
+        const self = this // Store reference to 'this'
 
         empty!.style.display = 'flex'
         empty!.style.justifyContent = 'center'
@@ -75,19 +100,26 @@ export class GeneExpressionComponent implements OnInit {
         }
 
         if (this.clickedPin?.clicked) {
-            const matchingColumns = columnNames.filter(
-                (columnName: string) =>
-                    this.clickedPin &&
-                    columnName.toLowerCase().includes(this.clickedPin.name.toLowerCase())
-            )
+            const matchingColumns = columnNames
+                .filter(
+                    (columnName: string) =>
+                        this.clickedPin &&
+                        columnName.toLowerCase().includes(this.clickedPin.name.toLowerCase())
+                )
+                .map((columnName: string) => ({
+                    name: columnName,
+                    color: this.clickedPin?.color, // Add color information
+                }))
             this.selected.push(...matchingColumns)
+            console.log('this.selected: ')
+            console.log(this.selected)
         }
 
         if (!this.clickedPin?.clicked) {
             this.selected = this.selected.filter(
-                (item: string) =>
+                (item: { name: string; color: string | undefined }) =>
                     this.clickedPin &&
-                    !item.toLowerCase().includes(this.clickedPin.name.toLowerCase())
+                    !item.name.toLowerCase().includes(this.clickedPin.name.toLowerCase())
             )
         }
 
@@ -107,31 +139,45 @@ export class GeneExpressionComponent implements OnInit {
 
         for (let i = 0; i < this.selected.length; i++) {
             let btn = document.createElement('button')
-            btn.innerHTML = this.selected[i]
-            btn.classList.add('filterBtn')
-            btn.style.backgroundColor = 'lightgrey'
-            btn.style.borderRadius = '10px'
-            btn.style.border = 'none'
+            btn.innerHTML = this.selected[i].name
+            btn.classList.add('filter-btn')
+            btn.style.backgroundColor = 'transparent'
+            btn.style.borderRadius = '28px'
+            btn.style.border = `2px solid ${this.selected[i].color}`
             btn.style.padding = '5px'
             btn.style.marginRight = '5px'
             btn.style.marginBottom = '5px'
             btn.style.cursor = 'pointer'
             btn.style.width = 'calc( 100%-20% )'
             btn.style.height = '30px'
-            btn.style.color = 'white'
+            btn.style.color = 'darkgrey'
+            btn.style.fontSize = '12px'
+
+            let borderColor = this.selected[i].color
+
+            btn.addEventListener('mouseover', function () {
+                this.style.border = `3px solid ${borderColor}`
+            })
+            btn.addEventListener('mouseout', function () {
+                this.style.border = `2px solid ${borderColor}`
+            })
 
             let clicked = false
             btn.addEventListener('click', function () {
                 if (!clicked) {
                     dimensions2.push(this.innerHTML)
-                    this.style.backgroundColor = '#4f6d7a'
+                    if (borderColor) {
+                        this.style.backgroundColor = hexToRGBA(borderColor, 0.5) // 50% transparency
+                    }
+                    this.style.color = 'white'
                     clicked = true
                 } else {
                     let index = dimensions2.indexOf(this.innerHTML)
                     if (index !== -1) {
                         dimensions2.splice(index, 1)
                     }
-                    this.style.backgroundColor = 'lightgrey'
+                    this.style.backgroundColor = 'transparent'
+                    this.style.color = 'darkgrey'
                     clicked = false
                 }
                 drawChart(dimensions2)
@@ -148,6 +194,18 @@ export class GeneExpressionComponent implements OnInit {
             if (filter) filter.appendChild(btn)
         }
 
+        function hexToRGBA(hex: string, alpha: number) {
+            let r = parseInt(hex.slice(1, 3), 16),
+                g = parseInt(hex.slice(3, 5), 16),
+                b = parseInt(hex.slice(5, 7), 16)
+
+            if (alpha) {
+                return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')'
+            } else {
+                return 'rgb(' + r + ', ' + g + ', ' + b + ')'
+            }
+        }
+
         function drawChart(dimensions: any) {
             svgContainer.selectAll('*').remove()
             let svg = d3
@@ -162,15 +220,6 @@ export class GeneExpressionComponent implements OnInit {
                 .transition() // add a transition
                 .duration(500) // duration of the transition in milliseconds
                 .style('opacity', 1) // end with an opacity of 1
-
-            let color = d3
-                .scaleOrdinal()
-                .domain([
-                    data.map(function (d: any) {
-                        return d.Gene
-                    }),
-                ])
-                .range(['lightgrey'])
 
             let y: { [key: string]: any } = {}
             for (let i in dimensions) {
@@ -229,12 +278,14 @@ export class GeneExpressionComponent implements OnInit {
                 .style('pointer-events', 'none')
 
             // Draw the lines
-            svg.selectAll('myPath')
-                .data(data)
+            let lines = svg.selectAll('myPath').data(data)
+
+            lines
                 .enter()
                 .append('path')
                 .attr('class', function (d: any) {
-                    return 'line ' + d.Gene
+                    let geneRename = 'ex-' + d.Gene.replace(/[^\w\s]|_/g, '').toLowerCase()
+                    return 'line ' + geneRename
                 }) // 2 class for each line: 'line' and the group name
                 .attr('d', function (d: any) {
                     return d3.line()(
@@ -244,11 +295,9 @@ export class GeneExpressionComponent implements OnInit {
                     )
                 })
                 .style('fill', 'none')
-                .style('stroke', function (d: any) {
-                    return color(d.Gene) as string
-                })
-                .style('stroke-width', 2)
-                .style('opacity', 0.5)
+                .style('stroke', '#53b3bd')
+                .style('stroke-width', 1)
+                .style('opacity', 0.1)
                 .style('cursor', 'pointer')
                 .on('mouseover', function (event: any, d: any) {
                     d3.select(this)
@@ -290,14 +339,25 @@ export class GeneExpressionComponent implements OnInit {
                 })
                 .on('mouseleave', function () {
                     d3.selectAll('.line')
-                        .style('stroke', function (d: any) {
-                            return color(d.Gene) as string
-                        })
-                        .style('opacity', '1')
-                        .style('stroke-width', 2)
+                        .style('stroke', '#53b3bd')
+                        .style('opacity', '0.1')
+                        .style('stroke-width', 1)
                     tooltip.style('opacity', 0)
                 })
 
+            // Update the lines
+            lines.attr('d', function (d: any) {
+                return d3.line()(
+                    dimensions.map(function (p: any) {
+                        return [x(p), y[p](d[p])]
+                    })
+                )
+            })
+
+            // Remove the lines
+            lines.exit().remove()
+
+            // Draw axis
             svg.selectAll('myAxis')
                 .data(dimensions)
                 .enter()
@@ -320,7 +380,17 @@ export class GeneExpressionComponent implements OnInit {
                 .text(function (d: any) {
                     return '▲' + d
                 })
-                .style('fill', '#4f6d7a')
+                .style('fill', function (d: any) {
+                    if (!self.selected) {
+                        return null // or handle the case when this.selected is undefined
+                    }
+                    let item = self.selected.find(item => item.name === d)
+                    let color = item?.color as string
+                    console.log('item: ')
+                    console.log(item?.color)
+
+                    return item ? color : '#4f6d7a'
+                })
                 .style('cursor', 'pointer')
                 .on('mouseover', function () {
                     d3.select(this).style('text-decoration', 'underline')

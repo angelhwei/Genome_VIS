@@ -2,41 +2,24 @@
 
 <div class="container">
     <div class="barchart-container span9" #container>
-        <!-- <div class="title editable" contenteditable="true">
-            Scaffold Barchart (Clicking to rename the title)
-        </div> -->
         <input
             class="title editable"
             type="text"
             placeholder="Scaffold Barchart (Clicking to rename the title)"
         />
-        <!-- <div class="name-container">
-            <div class="rename-container">
-                <mat-form-field appearance="outline" class="dense-2">
-                    <mat-label>Chromosome Name</mat-label>
-                    <input matInput type="text" id="title-input" value="Chr1" />
-                </mat-form-field>
-                <div>
-                    <button class="btn" mat-flat-button matTooltip="Rename the current chromosome!">
-                        Rename
-                    </button>
-                </div>
-            </div>
-        </div> -->
-
         <div>
             <app-scaffold-barchart #svgComponent></app-scaffold-barchart>
         </div>
     </div>
 
     <div class="sequence-container span9-2">
-        <app-scaffold-sequence #svgComponent2></app-scaffold-sequence>
+        <app-scaffold-sequence #svgComponent2 (geneClicked)="handleGeneClicked($event)"></app-scaffold-sequence>
     </div>
 
     <div class="gene-exp-container span3" #container2>
         <div class="title">Gene Expression</div>
         <div class="pc">
-            <app-gene-expression #svgComponent3></app-gene-expression>
+            <app-gene-expression #svgComponent3 [geneDetails]="selectedGene"></app-gene-expression>
         </div>
     </div>
 </div>

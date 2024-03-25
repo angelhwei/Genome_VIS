@@ -32,7 +32,6 @@ import { ThemePalette } from '@angular/material/core'
         MatTooltipModule,
         MatExpansionModule,
         MatNativeDateModule,
-
     ],
     templateUrl: './homepage.component.html',
     styleUrl: './homepage.component.scss',
@@ -42,9 +41,13 @@ export class HomepageComponent implements AfterViewInit {
     @ViewChild('svgComponent') svgComponent!: ScaffoldBarchartComponent
     @ViewChild('svgComponent2') svgComponent2!: ScaffoldSequenceComponent
     @ViewChild('container') container!: ElementRef
-
     @ViewChild('svgComponent3') svgComponent3!: GeneExpressionComponent
     @ViewChild('container2') container2!: ElementRef
+    selectedGene = ''
+
+    handleGeneClicked(details: string) {
+        this.selectedGene = details
+    }
 
     ngAfterViewInit() {
         this.updateWidth()
@@ -57,7 +60,6 @@ export class HomepageComponent implements AfterViewInit {
 
     updateWidth() {
         if (this.svgComponent && this.container) {
-            console.log(this.svgComponent3)
             this.svgComponent.width = this.container.nativeElement.offsetWidth
             this.svgComponent.height = this.container.nativeElement.offsetHeight
             this.svgComponent2.width = this.container.nativeElement.offsetWidth

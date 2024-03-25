@@ -9,7 +9,7 @@ export class MapDataService {
   constructor() {}
 
   fetchData() {
-    return fetch('http://localhost:4200/assets/data/map-data.csv')
+    return fetch('../../assets/data/map-data.csv')
       .then((response) => response.text())
       .then((data) => d3.csvParse(data));
   }

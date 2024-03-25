@@ -48,7 +48,7 @@ export class ScaffoldBarchartComponent implements OnInit {
         let x = d3
             .scaleBand()
             .range([0, barWidth])
-            .padding(0.2)
+            .padding(0.4)
             .domain(
                 data.map(function (d: any) {
                     return d.chromosome
@@ -57,7 +57,7 @@ export class ScaffoldBarchartComponent implements OnInit {
         let xAxis = d3.axisBottom(x)
         let tickValues = data
             .filter(function (d: any) {
-                return d.mutation.length > 0
+                return d.mutation.length > 1
             })
             .map(function (d: any) {
                 return d.chromosome
@@ -67,7 +67,6 @@ export class ScaffoldBarchartComponent implements OnInit {
         xAxis.tickValues(tickValues)
         svg.append('g')
             .attr('transform', 'translate(0,' + barHeight + ')')
-            .call(d3.axisBottom(x))
             .call(xAxis)
             .selectAll('text')
             .attr('transform', 'translate(-10,0)rotate(-45)')
@@ -94,14 +93,21 @@ export class ScaffoldBarchartComponent implements OnInit {
         let yAxis = d3.axisLeft(y).ticks(3)
 
         svg.append('g').call(yAxis)
+        // Make the y axis line thinner
+        svg.selectAll('.domain').style('stroke-width', '0.5px')
+
+        // Make the y axis ticks thinner
+        svg.selectAll('.tick line').style('stroke-width', '0.5px')
+
         svg.append('text')
             .attr('transform', 'rotate(-90)')
-            .attr('y', 0 - margin.left + 10 + 'px') // Adjust the position of the label from the left margin
-            .attr('x', 0 - barHeight / 2) // Adjust the position of the label from the top
+            .attr('y', 0 - margin.left + 10 + 'px')
+            .attr('x', 0 - barHeight / 2)
             .attr('dy', '1em')
             .style('text-anchor', 'middle')
             .text('Scaffold Length')
             .attr('fill', '#6c757d')
+
         svg.selectAll('myline')
             .data(data)
             .enter()
@@ -114,35 +120,35 @@ export class ScaffoldBarchartComponent implements OnInit {
             .attr('height', function (d) {
                 return 0
             })
-            .attr('fill', '#BDC3C7')
-            .attr('cursor', 'pointer') // Set the cursor to indicate it's clickable
+            .attr('fill', '#adb5bd')
+            .attr('class', (d: any) => `bar-${d.chromosome}`)
+            .attr('cursor', 'pointer')
             .on('mouseover', function (event, d: any) {
-                // console.log(d.chromosome);
                 tooltip.transition().duration(200).style('opacity', 1)
                 tooltip.html(`Chr: ${d.chromosome} Length: ${d.length}`)
                 tooltip.style('top', event.pageY - 35 + 'px').style('left', event.pageX + 5 + 'px')
 
-                d3.select(this).style('fill', '#e07a5f')
+                d3.select(this).style('fill', '#5c677d')
             })
             .on('mouseout', function () {
                 tooltip.transition().duration(200).style('opacity', 0)
-                d3.select(this).style('fill', '#BDC3C7')
+                d3.select(this).style('fill', '#adb5bd')
             })
             .on('click', function (event, d: any) {
                 // Remove any existing images
                 d3.selectAll('image').remove()
+                d3.selectAll('rect').style('stroke', 'none')
+                d3.selectAll('circle').attr('stroke', 'none')
+                d3.select(this).style('stroke-width', '2').style('stroke', '#5c677d')
 
                 // Add an image above the clicked bar
-                d3.select('svg') // Select the SVG element
+                d3.select('svg')
                     .append('image')
-                    .attr('xlink:href', '../../../../../assets/down.png') // Replace with your image path
+                    .attr('xlink:href', '../../../../../assets/down2.png')
                     .attr('width', 15 + 'px')
                     .attr('height', 15 + 'px')
-                    .attr('x', (x(d.chromosome) || 0) + 86) // Position the image above the bar (5 is the padding)
-                    .attr('y', y(d.length) - 1) // Position the image above the bar
-
-                d3.selectAll('rect').style('stroke', 'none')
-                d3.select(this).style('stroke-width', '1').style('stroke', '#e07a5f')
+                    .attr('x', (x(d.chromosome) || 0) + 86)
+                    .attr('y', y(d.length) - 1)
 
                 callEmit(10, 1000, d.chromosome)
                 // console.log(d.chromosome);
@@ -184,18 +190,19 @@ export class ScaffoldBarchartComponent implements OnInit {
             .data(flatData)
             .enter()
             .append('circle')
-            .attr('cx', (d: any) => {
-                return d.chromosome
-            })
+            .attr('class', (d: any) => `circle-${d.mutation.BP}`)
+            .attr('cx', (d: any) => (x(d.chromosome) as any) + x.bandwidth() / 2)
             .attr('cy', function (d: any) {
+                if (!d.mutation.BP) {
+                    console.log('d.chomosome:', d.chromosome)
+                    console.log('d.mutation.BP:', d.mutation.BP)
+                }
                 return y(d.mutation.BP)
             })
-            .attr('r', function (d: any) {
-                return d.mutation.muValues * 10
-            })
             .style('fill', function (d) {
-                return 'rgba(192,36,37,0.4)' // Apply a different fill color for data with PopID "OL"
+                return 'rgba(192,36,37,0.1)'
             })
+            .style('opacity', 0)
             .attr('cursor', 'pointer') // Set the cursor to indicate it's clickable
             .on('mouseover', function (event, d: any) {
                 tooltip.transition().duration(200).style('opacity', 1)
@@ -210,8 +217,8 @@ export class ScaffoldBarchartComponent implements OnInit {
                     .style('border-radius', '5px')
                     .style('padding', '5px')
                 d3.select(this)
-                    .transition() // Add transition effect
-                    .duration(200) // Set the transition duration in milliseconds
+                    .transition()
+                    .duration(200)
                     .attr('r', function (d: any) {
                         return d.mutation.muValues * 10 + 5
                     })
@@ -219,50 +226,75 @@ export class ScaffoldBarchartComponent implements OnInit {
             .on('mouseout', function () {
                 tooltip.transition().duration(200).style('opacity', 0)
                 d3.select(this)
-                    .transition() // Add transition effect
-                    .duration(200) // Set the transition duration in milliseconds
+                    .transition()
+                    .duration(200)
                     .attr('r', function (d: any) {
                         return d.mutation.muValues * 10
                     })
             })
-            .on('click', function (d) {
-                // Clear the stroke of all circles
+            .on('click', function (event, d: any) {
+                // Remove any existing images
+                d3.selectAll('image').remove()
                 d3.selectAll('circle').attr('stroke', 'none').attr('stroke-width', '0px')
+                const bar = d3.select(`.bar-${d.chromosome}`)
+                d3.selectAll('rect').style('stroke', 'none')
+                bar.style('stroke-width', '2').style('stroke', '#5c677d')
 
-                d3.select('#chr_name').text(d.chromosome)
-                d3.select('#content2').text('') // Clear the content
+                // Add an image above the clicked bar
+                d3.select('svg')
+                    .append('image')
+                    .attr('xlink:href', '../../../../../assets/down2.png')
+                    .attr('width', 15 + 'px')
+                    .attr('height', 15 + 'px')
+                    .attr('x', (x(d.chromosome) || 0) + 86)
+                    .attr('y', y(d.length) - 1)
 
                 d3.select(this)
                     .classed('selected', true)
-                    .attr('stroke', '#c02425')
+                    .attr('stroke', '#5c677d')
                     .attr('stroke-width', '3px')
 
-                callEmit(10, 1000, d.chromosome) // Update the content with the selected bar's data
+                callEmit(10, 1000, d.chromosome)
+                d3.select('#chr_name').text(d.chromosome)
+                d3.select('#content2').text('')
                 d3.select('#content2')
-                    .style('opacity', 0) // 將 content2 的透明度變為 0
+                    .style('opacity', 0)
                     .transition()
                     .duration(500)
                     .style('opacity', 1)
             })
             .filter(function (d: any) {
-                return d.mutation.MuValues == 0
+                return d.mutation.muValues == 0
             }) // Filter out data with Value equal to 0
             .style('display', 'none') // Hide the circle for data with Value equal to 0
 
-        svg.selectAll('mycircle')
-            .data(flatData)
-            .enter()
-            .append('circle')
-            .attr('cx', (d: any) => {
-                return d.chromosome
-            })
+        // Animation
+        svg.selectAll('circle')
+            .transition()
+            .duration(1000)
             .attr('cy', function (d: any) {
                 return y(d.mutation.BP)
             })
-            .attr('r', 1.5)
-            .style('fill', function (d) {
-                return 'rgba(192,140,1,1)' // Apply a different fill color for data with PopID "OL"
+            .attr('r', function (d: any) {
+                return d.mutation.muValues * 10
             })
+            .delay(function (d, i) {
+                return i * 2.5
+            })
+            .style('opacity', 1)
+
+        // svg.selectAll('mycircle')
+        //     .data(flatData)
+        //     .enter()
+        //     .append('circle')
+        //     .attr('cx', (d: any) => x(d.chromosome) as any + x.bandwidth() / 2)
+        //     .attr('cy', function (d: any) {
+        //         return y(d.mutation.BP)
+        //     })
+        //     .attr('r', 1.5)
+        //     .style('fill', function (d) {
+        //         return 'rgba(192,140,1,1)' // Apply a different fill color for data with PopID "OL"
+        //     })
 
         const callEmit = (squareWidth: Number, compressionNum: Number, scaffold: any) => {
             this.emitData(squareWidth, compressionNum, scaffold)

@@ -11,6 +11,7 @@ interface MarkerProperties {
     name: string // Add this line
     color: string
     clicked: boolean
+    size: google.maps.Size
 }
 
 @Component({
@@ -29,6 +30,19 @@ export class MapComponent implements OnInit {
     zoom = 10
     center: { lat: number; lng: number }
     markers: MarkerProperties[] = []
+    colors = [
+        '#eb5e55',
+        '#168aad',
+        '#e07a5f',
+        '#8e7dbe',
+        '#90be6d',
+        '#ffb950',
+        '#86bbd8',
+        '#f7af9d',
+        '#a5a58d',
+        '#cb997e',
+    ]
+    selectedColors = [] as Array<string>
 
     @ViewChild(GoogleMap) map!: GoogleMap
 
@@ -48,8 +62,9 @@ export class MapComponent implements OnInit {
                         lng: lng,
                     },
                     name: data.Name,
-                    color: '#4f6d7a',
+                    color: '#5c677d',
                     clicked: false,
+                    size: new google.maps.Size(30, 35),
                 }
                 this.markers.push(marker)
                 // console.log(marker.position)
@@ -68,13 +83,13 @@ export class MapComponent implements OnInit {
     //     <feDropShadow dx="2" dy="10" stdDeviation="3" flood-color="rgba(26, 58, 70, 0.5)"/>
     //   </filter>
     // </defs>
-    // <path filter="url(#dropshadow)" stroke="#fff" stroke-width="3" fill="${marker.color}" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" />
+    // <path filter="url(#dropshadow)" stroke="#fff" stroke-width="20" fill="${marker.color}" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" />
     // </svg>`
         let svgUrl = 'data:image/svg+xml;utf-8, ' + encodeURIComponent(svgIcon)
         return {
             icon: {
                 url: svgUrl,
-                scaledSize: new google.maps.Size(30, 35),
+                scaledSize: marker.size,
             },
             label: {
                 color: 'white', // replace 'red' with the color you want to use for the label
@@ -85,11 +100,18 @@ export class MapComponent implements OnInit {
     }
 
     onMarkerClick(clickedMarker: MarkerProperties) {
-        if (clickedMarker.color == '#4f6d7a') {
-            clickedMarker.color = '#e07a5f'
+        if (clickedMarker.color == '#5c677d') {
+            clickedMarker.color = this.generateRandomColor()
+            clickedMarker.size = new google.maps.Size(35, 40)
             clickedMarker.clicked = true
         } else {
-            clickedMarker.color = '#4f6d7a'
+            const index = this.selectedColors.indexOf(clickedMarker.color)
+            if (index !== -1) {
+                this.selectedColors.splice(index, 1) // Remove the color from the selectedColors array
+            }
+            console.log(this.selectedColors)
+            clickedMarker.color = '#5c677d'
+            clickedMarker.size = new google.maps.Size(30, 35)
             clickedMarker.clicked = false
         }
         this.pinClicked.emit(clickedMarker)
@@ -113,5 +135,26 @@ export class MapComponent implements OnInit {
         const bounds = { north, south, east, west }
 
         return bounds
+    }
+
+    // generateRandomColor(): string {
+    //     const randomR = (Math.floor(Math.random() * 156) + 100).toString(16)
+    //     const randomG = (Math.floor(Math.random() * 156) + 100).toString(16)
+    //     const randomB = (Math.floor(Math.random() * 156) + 100).toString(16)
+    //     return '#' + randomR + randomG + randomB
+    // }
+
+    generateRandomColor() {
+        let index = Math.floor(Math.random() * this.colors.length)
+        let color = this.colors[index]
+        while (this.selectedColors.includes(color)) {
+            index = Math.floor(Math.random() * this.colors.length)
+            color = this.colors[index]
+        }
+        if (!this.selectedColors.includes(color)) {
+            this.selectedColors.push(color)
+        }
+
+        return color
     }
 }

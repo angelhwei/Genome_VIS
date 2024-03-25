@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core'
+import { Component, Input, Output, EventEmitter } from '@angular/core'
 import * as d3 from 'd3'
 import { MatButtonModule } from '@angular/material/button'
 import { MatTooltipModule } from '@angular/material/tooltip'
@@ -31,8 +31,10 @@ import { ThemePalette } from '@angular/material/core'
     styleUrl: './scaffold-sequence.component.scss',
 })
 export class ScaffoldSequenceComponent {
-    colorControl = new FormControl('warn' as ThemePalette)
     @Input() width!: number
+    @Output() geneClicked = new EventEmitter<string>()
+
+    colorControl = new FormControl('warn' as ThemePalette)
     squareWidth: number = 10
     compressionNum: number = 1000
     scaffold!: string
@@ -66,8 +68,8 @@ export class ScaffoldSequenceComponent {
             .attr('cx', x)
             .attr('cy', y)
             .attr('r', 3)
-            .attr('fill', '#c02425')
-            .style('opacity', 1)
+            .attr('fill', c)
+            .style('opacity', 0.9)
             .style('stroke', 'none')
 
         const circle = svg
@@ -76,20 +78,22 @@ export class ScaffoldSequenceComponent {
             .attr('cy', y)
             .attr('r', radius)
             .attr('fill', c)
-            .style('opacity', opacity)
+            .style('opacity', 0.5)
             .style('stroke', 'none') // Initially, no stroke
+            .attr('cursor', 'pointer')
 
         // circle.raise();
         // Create a tooltip
         const tooltip = d3
-            .select('.content2')
+            .select('#content2')
             .append('div')
-            .attr('class', 'tooltip')
-            .style('opacity', 0)
             .style('background-color', 'rgba(0, 0, 0, 0.8)')
             .style('color', '#fff')
             .style('border-radius', '5px')
-            .style('padding', '5px')
+            .style('position', 'absolute')
+            .style('class', 'tooltip')
+            .style('padding', '10px')
+            .style('opacity', 0)
             .style('pointer-events', 'none')
             .style('z-index', '100')
 
@@ -163,18 +167,22 @@ export class ScaffoldSequenceComponent {
         c: any,
         details: string,
         last: any,
-        lastPosition: any
+        lastPosition: any,
+        geneName: string
     ) {
+        let geneRename = 'seq-' + geneName.replace(/[^\w\s]|_/g, '').toLowerCase()
+        console.log('geneRename:')
+        console.log(geneRename)
         // Append a rectangle element to the SVG
         const rectangle = svg
             .append('rect')
-            // Set the x and y coordinates of the rectangle
+            .attr('class', function (d: any) {
+                return 'gene ' + geneRename
+            })
             .attr('x', x)
             .attr('y', y)
-            // Set the width and height of the rectangle
             .attr('width', w)
             .attr('height', h)
-            // Set the fill color of the rectangle
             .attr('fill', c)
             .style('opacity', 0.7)
             .attr('cursor', 'pointer')
@@ -183,24 +191,22 @@ export class ScaffoldSequenceComponent {
 
         if (last) {
             svg.append('text')
-                // Set the x and y coordinates of the text
                 .attr('x', x + w * 1.5)
                 .attr('y', y + w)
-                // Set the content of the text
                 .text(lastPosition)
-                .style('font-size', w) // Replace '20px' with the desired font size
+                .style('font-size', w)
                 .on('mouseover', (event: any) => {
                     if (w <= 5) {
-                        d3.select(event.target).style('font-size', 10) // Double the font size on mouseover
+                        d3.select(event.target).style('font-size', 10)
                     }
                 })
                 .on('mouseout', (event: any) => {
                     if (w <= 5) {
-                        d3.select(event.target).style('font-size', w) // Restore the original font size on mouseout
+                        d3.select(event.target).style('font-size', w)
                     }
                 })
         }
-        // Create a tooltip
+
         const tooltip = d3
             .select('#content2')
             .append('div')
@@ -224,8 +230,12 @@ export class ScaffoldSequenceComponent {
             .on('mouseout', function () {
                 tooltip.style('opacity', 0)
             })
-            .on('click', function () {
-                // parallelCoordinates()
+            .on('click', () => {
+                d3.selectAll('.gene').attr('fill', c).style('opacity', 0.7)
+
+                const seq = d3.selectAll('.' + geneRename)
+                seq.attr('fill', '#2D929B').style('opacity', 1)
+                this.geneClicked.emit(geneName)
             })
     }
 
@@ -235,7 +245,6 @@ export class ScaffoldSequenceComponent {
             let compressionNum = this.compressionNum
             let scaffold = this.scaffold
             let squareHeight = squareWidth
-            // console.log(data)
             let width = 1000
             if (this.width) {
                 squareWidth <= 5
@@ -244,7 +253,7 @@ export class ScaffoldSequenceComponent {
             }
             let margin = { top: 20, right: 30, bottom: 60, left: 90 }
 
-            console.log('scaffold:' + scaffold)
+            // console.log('scaffold:' + scaffold)
 
             // gene's location
             let X = 0
@@ -252,12 +261,12 @@ export class ScaffoldSequenceComponent {
             let yAdd = squareWidth * 2
 
             // colors
-            let genomeColorL1 = '#53B3BD'
+            let genomeColorL1 = '#0fa3b1'
             let variantColor = d3
                 .scaleLinear()
                 .domain([1, 0])
                 .range(['#c02425', '#EDC534'] as any)
-            let comColor = '#BDC3C7'
+            let comColor = '#adb5bd'
 
             // mutation circle size
             let muRadius = squareWidth * 2
@@ -284,7 +293,7 @@ export class ScaffoldSequenceComponent {
                     muRadius * mutation.muValues,
                     variantColor(mutation.muValues),
                     mutation.muValues,
-                    `BP: ${mutation.BP}<br>Mmutation degree: ${mutation.muValues}<br>P Nuc: ${mutation.pNuc}`
+                    `BP: ${mutation.BP}<br>Mutation degree: ${mutation.muValues}<br>Ref: ${mutation.pRef}<br>P Nuc: ${mutation.pNuc}`
                 )
                 X += 2
                 if (X + squareWidth > width) {
@@ -292,11 +301,12 @@ export class ScaffoldSequenceComponent {
                     X = 0
                 }
             }
+
             const geneCompress = (
                 start: number,
                 end: number,
                 isGene: boolean,
-                geneName: string
+                geneName: string = ''
             ) => {
                 let squareNum = Math.floor((end - start) / compressionNum)
                 let squareRemain = Math.floor((end - start) % compressionNum)
@@ -317,21 +327,26 @@ export class ScaffoldSequenceComponent {
                     } else {
                         lastPosition += compressionNum
                     }
+
+                    // If the last square, set last to true
                     if (
                         (X + squareWidth <= width && X + squareWidth * 2 > width) ||
                         (endSquare && k === squareNum - 1)
                     ) {
                         last = true
                     }
+
                     if (X + squareWidth > width) {
                         Y += yAdd
                         X = 0
                     }
+
                     if (squareWidth < 5) {
                         svg.attr('height', Y + 10)
                     } else {
                         svg.attr('height', Y + squareWidth + 10)
                     }
+
                     if (isGene) {
                         this.drawGeneRectangle(
                             svg,
@@ -342,7 +357,8 @@ export class ScaffoldSequenceComponent {
                             genomeColorL1,
                             `Gene: ${geneName} &nbsp Start: ${start} &nbsp End: ${end}`,
                             last,
-                            lastPosition
+                            lastPosition,
+                            geneName
                         )
                     } else {
                         this.drawRectangle(
@@ -364,150 +380,152 @@ export class ScaffoldSequenceComponent {
 
             for (let i = 0; i < data.length; i++) {
                 if (data[i].chromosome !== scaffold) continue
+
                 let lastGene = data[i].gene.length - 1
                 let muInLastGene = false
                 let mutations = data[i].mutation
 
-                // enter selected scaffold
+                // Enter selected scaffold
                 for (let g = 0; g < data[i].gene.length; g++) {
                     let gene = data[i].gene[g]
                     let previousPoint = g === 0 ? 0 : data[i].gene[g - 1].end
                     let hasMutation = false
-                    let mChange = false
-                    let mChangeTime = 0
+                    // let mChange = false
+                    // let mChangeTime = 0
 
+                    // No mutation in the scaffold
                     if (mutations.length === 0) {
+                        if (previousPoint > gene.start) {
+                            geneCompress(previousPoint, gene.end, true, gene.name)
+                        }
                         geneCompress(previousPoint, gene.start, false, '')
                         geneCompress(gene.start, gene.end, true, gene.name)
                         continue
                     }
 
-                    for (let m = 1; m < mutations.length; m += 2) {
-                        hasMutation = false
-                        let mutation = mutations[m]
-                        // if (mutation.muValues === 0) continue
-                        // check the mutation is in the current gene range
+                    // Mutation in the scaffold
+                    for (let m = 0; m < mutations.length; m++) {
+                        let start = gene.start
 
-                        // among previous gene end + 1 and current gene start - 1
-                        if (mutation.BP > previousPoint && mutation.BP < gene.start) {
-                            geneCompress(previousPoint, mutation.BP, false, '')
-                            drawMutation(mutation)
-                            while (
-                                m + 2 < mutations.length &&
-                                mutations[m + 2].BP > previousPoint &&
-                                mutations[m + 2].BP < gene.start
-                            ) {
-                                m += 2
-                                if (mutations[m].BP - mutations[m - 2].BP < compressionNum) {
-                                    drawMutation(mutations[m])
-                                } else {
-                                    geneCompress(mutations[m - 2].BP, mutations[m].BP, false, '')
-                                    drawMutation(mutations[m])
-                                }
-                            }
-                            geneCompress(mutation.BP, gene.start, false, '')
-                            if (m + 2 < mutations.length) mutation = mutations[(m += 2)]
-                            hasMutation = true
-                            geneCompress(gene.start, gene.end, true, gene.name)
-                        }
+                        // among previous gene end and current gene start
+                        if (mutations[m].BP > previousPoint && mutations[m].BP < start) {
+                            geneCompress(previousPoint, mutations[m].BP, false, '')
+                            drawMutation(mutations[m])
 
-                        // mutation is on the gene start
-                        if (gene.start === mutation.BP) {
-                            geneCompress(previousPoint, gene.start, false, '')
-                            drawMutation(mutation)
-                            while (
-                                m + 2 < mutations.length && // Check that m + 1 is a valid index
-                                mutations[m + 2].BP < gene.end
-                            ) {
-                                m += 2
-                                if (mutations[m].BP - mutations[m - 2].BP < compressionNum) {
-                                    drawMutation(mutations[m])
-                                } else {
-                                    geneCompress(
-                                        mutations[m - 2].BP,
-                                        mutations[m].BP,
-                                        true,
-                                        gene.name
-                                    )
-                                    drawMutation(mutations[m])
-                                }
+                            while (m + 1 < mutations.length && mutations[m + 1].BP < start) {
+                                m++
+                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false, '')
+                                drawMutation(mutations[m])
                             }
-                            geneCompress(mutations[m].BP, gene.end, true, gene.name)
-                            if (m + 2 < mutations.length) mutation = mutations[(m += 2)]
+
+                            geneCompress(mutations[m].BP, start, false, '')
                             hasMutation = true
+                            if (
+                                (m + 1 < mutations.length && mutations[m + 1].BP > gene.end) ||
+                                m + 1 >= mutations.length
+                            ) {
+                                geneCompress(start, gene.end, true, gene.name)
+                            }
                         }
 
                         // among current gene start and end
-                        if (gene.start < mutation.BP && gene.end > mutation.BP) {
-                            geneCompress(previousPoint, gene.start, false, '')
-                            geneCompress(gene.start, mutation.BP, true, gene.name)
-                            drawMutation(mutation)
-                            while (
-                                m + 2 < mutations.length && // Check that m + 1 is a valid index
-                                mutations[m + 2].BP < gene.end
-                            ) {
-                                m += 2
-                                if (mutations[m].BP - mutations[m - 2].BP < compressionNum) {
+                        if (mutations[m].BP >= start && mutations[m].BP <= gene.end) {
+                            // current gene start is smaller than previous point
+                            if (previousPoint > start) {
+                                start = previousPoint
+                            } else if (!hasMutation) {
+                                geneCompress(previousPoint, start, false, '')
+                            }
+
+                            if (mutations[m].BP === start) {
+                                drawMutation(mutations[m])
+
+                                while (m + 1 < mutations.length && mutations[m + 1].BP === start) {
+                                    m++
                                     drawMutation(mutations[m])
-                                } else {
+                                    // mChange = true
+                                    // mChangeTime++
+                                }
+                            }
+
+                            if (mutations[m].BP > start && mutations[m].BP < gene.end) {
+                                geneCompress(start, mutations[m].BP, true, gene.name)
+                                drawMutation(mutations[m])
+
+                                while (
+                                    m + 1 < mutations.length &&
+                                    mutations[m + 1].BP > start &&
+                                    mutations[m + 1].BP < gene.end
+                                ) {
+                                    m++
                                     geneCompress(
-                                        mutations[m - 2].BP,
+                                        mutations[m - 1].BP,
                                         mutations[m].BP,
                                         true,
                                         gene.name
                                     )
                                     drawMutation(mutations[m])
+                                    // mChange = true
+                                    // mChangeTime++
                                 }
-                                mChange = true
-                                mChangeTime++
                             }
-                            if (!mChange) {
-                                geneCompress(mutations[m].BP, gene.end, true, gene.name)
-                            } else {
-                                geneCompress(
-                                    mutations[m - 2 * mChangeTime].BP,
-                                    gene.end,
-                                    true,
-                                    gene.name
-                                )
-                            }
-                            if (m + 2 < mutations.length) mutation = mutations[(m += 2)]
-                            hasMutation = true
-                        }
 
-                        // mutation is on the gene end
-                        if (gene.end === mutation.BP) {
-                            geneCompress(previousPoint, gene.start, false, '')
-                            geneCompress(gene.start, gene.end, true, gene.name)
-                            drawMutation(mutation)
+                            // if (!mChange) {
+                            geneCompress(mutations[m].BP, gene.end, true, gene.name)
+                            // } else {
+                            //     geneCompress(
+                            //         mutations[m - mChangeTime].BP,
+                            //         gene.end,
+                            //         true,
+                            //         gene.name
+                            //     )
+                            // }
+
+                            if (mutations[m].BP === gene.end) {
+                                drawMutation(mutations[m])
+                                // multiMutation()
+                                while (
+                                    m + 1 < mutations.length &&
+                                    mutations[m + 1].BP === gene.end
+                                ) {
+                                    m++
+                                    drawMutation(mutations[m])
+                                }
+                            }
+
                             hasMutation = true
-                            break
                         }
 
                         // mutation is among the last gene end and scaffold end
-                        if (g === data[i].gene.length - 1 && mutation.BP > gene.end) {
-                            geneCompress(gene.end, mutation.BP, false, '')
-                            drawMutation(mutation)
-                            while (m + 2 < mutations.length) {
-                                m += 2
-                                if (mutations[m].BP - mutations[m - 2].BP < compressionNum) {
-                                    drawMutation(mutations[m])
-                                } else {
-                                    geneCompress(mutations[m - 2].BP, mutations[m].BP, false, '')
-                                    drawMutation(mutations[m])
-                                }
+                        if (g === lastGene && mutations[m].BP > gene.end) {
+                            geneCompress(gene.end, mutations[m].BP, false, '')
+                            drawMutation(mutations[m])
+                            while (m + 1 < mutations.length && mutations[m].BP > gene.end) {
+                                m++
+                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false, '')
+                                drawMutation(mutations[m])
                             }
-                            geneCompress(mutation.BP, data[i].length, false, '')
+                            endSquare = true
                             hasMutation = true
                             muInLastGene = true
+                            geneCompress(mutations[m].BP, data[i].length, false, '')
                         }
                     }
 
                     if (!hasMutation) {
-                        geneCompress(previousPoint, gene.start, false, '')
-                        geneCompress(gene.start, gene.end, true, gene.name)
+                        if (previousPoint > gene.start) {
+                            geneCompress(previousPoint, gene.end, true, gene.name)
+                        } else {
+                            geneCompress(previousPoint, gene.start, false, '')
+                            if (gene.end === data[i].length) {
+                                endSquare = true
+                            }
+                            geneCompress(gene.start, gene.end, true, gene.name)
+                        }
                     }
                 }
+
+                // The last compression
                 if (data[i].gene[lastGene].end < data[i].length) {
                     endSquare = true
                     if (!muInLastGene) {
