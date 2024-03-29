@@ -12,6 +12,7 @@ import { DataService } from '../../../../services/data.service'
 import { FormsModule } from '@angular/forms'
 import { FormControl, ReactiveFormsModule } from '@angular/forms'
 import { ThemePalette } from '@angular/material/core'
+import { SequenceExpressionService } from '../../../../services/sequence-expression.service'
 
 @Component({
     selector: 'app-scaffold-sequence',
@@ -38,8 +39,13 @@ export class ScaffoldSequenceComponent {
     squareWidth: number = 10
     compressionNum: number = 1000
     scaffold!: string
+    data: any
 
-    constructor(private shareService: ShareService, private dataService: DataService) {}
+    constructor(
+        private shareService: ShareService,
+        private dataService: DataService,
+        private sequenceExpr: SequenceExpressionService
+    ) {}
 
     ngOnInit() {
         this.shareService.currentData.subscribe(data => {
@@ -61,13 +67,14 @@ export class ScaffoldSequenceComponent {
         y: number,
         radius: number,
         c: any,
-        opacity: any,
+        squareWidth: any,
         details: string
     ) {
+        squareWidth < 5 ? (radius *= 2) : (radius = radius)
         svg.append('circle')
             .attr('cx', x)
             .attr('cy', y)
-            .attr('r', 3)
+            .attr('r', squareWidth / 3)
             .attr('fill', c)
             .style('opacity', 0.9)
             .style('stroke', 'none')
@@ -127,34 +134,32 @@ export class ScaffoldSequenceComponent {
         // Append a rectangle element to the SVG
         const rectangle = svg
             .append('rect')
-            // Set the x and y coordinates of the rectangle
             .attr('x', x)
             .attr('y', y)
-            // Set the width and height of the rectangle
             .attr('width', w)
             .attr('height', h)
-            // Set the fill color of the rectangle
             .attr('fill', c)
             .style('opacity', 0.7)
         rectangle.lower()
+
         if (last) {
-            svg.append('text')
-                // Set the x and y coordinates of the text
+            const fontSize = w <= 5 ? 10 : w
+            const textElement = svg
+                .append('text')
                 .attr('x', x + w * 1.5)
                 .attr('y', y + w)
-                // Set the content of the text
                 .text(lastPosition)
-                .style('font-size', w) // Replace '20px' with the desired font size
-                .on('mouseover', (event: any) => {
-                    if (w <= 5) {
-                        d3.select(event.target).style('font-size', 10) // Double the font size on mouseover
-                    }
-                })
-                .on('mouseout', (event: any) => {
-                    if (w <= 5) {
-                        d3.select(event.target).style('font-size', w) // Restore the original font size on mouseout
-                    }
-                })
+                .style('font-size', w)
+
+            const handleMouseOverOut = (event: any, size: number) => {
+                if (w <= 5) {
+                    d3.select(event.target).style('font-size', size)
+                }
+            }
+
+            textElement
+                .on('mouseover', (event: any) => handleMouseOverOut(event, fontSize))
+                .on('mouseout', (event: any) => handleMouseOverOut(event, w))
         }
     }
 
@@ -171,9 +176,6 @@ export class ScaffoldSequenceComponent {
         geneName: string
     ) {
         let geneRename = 'seq-' + geneName.replace(/[^\w\s]|_/g, '').toLowerCase()
-        console.log('geneRename:')
-        console.log(geneRename)
-        // Append a rectangle element to the SVG
         const rectangle = svg
             .append('rect')
             .attr('class', function (d: any) {
@@ -186,25 +188,22 @@ export class ScaffoldSequenceComponent {
             .attr('fill', c)
             .style('opacity', 0.7)
             .attr('cursor', 'pointer')
-
         rectangle.lower()
 
         if (last) {
+            const handleMouseEvents = (event: any, size: number) => {
+                if (w <= 5) {
+                    d3.select(event.target).style('font-size', size)
+                }
+            }
+
             svg.append('text')
                 .attr('x', x + w * 1.5)
                 .attr('y', y + w)
                 .text(lastPosition)
                 .style('font-size', w)
-                .on('mouseover', (event: any) => {
-                    if (w <= 5) {
-                        d3.select(event.target).style('font-size', 10)
-                    }
-                })
-                .on('mouseout', (event: any) => {
-                    if (w <= 5) {
-                        d3.select(event.target).style('font-size', w)
-                    }
-                })
+                .on('mouseover', (event: any) => handleMouseEvents(event, 10))
+                .on('mouseout', (event: any) => handleMouseEvents(event, w))
         }
 
         const tooltip = d3
@@ -222,20 +221,20 @@ export class ScaffoldSequenceComponent {
 
         // Add event handlers
         rectangle
-            .on('mouseover', function (event: any) {
+            .on('mouseover', (event: any) => {
                 tooltip.style('opacity', 1)
                 tooltip.html(details)
                 tooltip.style('left', event.pageX + 10 + 'px').style('top', event.pageY - 35 + 'px')
-            })
-            .on('mouseout', function () {
-                tooltip.style('opacity', 0)
-            })
-            .on('click', () => {
-                d3.selectAll('.gene').attr('fill', c).style('opacity', 0.7)
 
                 const seq = d3.selectAll('.' + geneRename)
                 seq.attr('fill', '#2D929B').style('opacity', 1)
-                this.geneClicked.emit(geneName)
+
+                this.sequenceExpr.changeData(geneName)
+                // this.geneClicked.emit(geneName)
+            })
+            .on('mouseout', function () {
+                tooltip.style('opacity', 0)
+                d3.selectAll('.gene').attr('fill', c).style('opacity', 0.7)
             })
     }
 
@@ -245,15 +244,12 @@ export class ScaffoldSequenceComponent {
             let compressionNum = this.compressionNum
             let scaffold = this.scaffold
             let squareHeight = squareWidth
-            let width = 1000
-            if (this.width) {
-                squareWidth <= 5
-                    ? (width = this.width - 10 * 10)
-                    : (width = this.width - 10 * squareWidth)
-            }
             let margin = { top: 20, right: 30, bottom: 60, left: 90 }
-
-            // console.log('scaffold:' + scaffold)
+            let width = this.width
+                ? squareWidth <= 5
+                    ? this.width - 10 * 10
+                    : this.width - 10 * squareWidth
+                : 1000
 
             // gene's location
             let X = 0
@@ -269,13 +265,10 @@ export class ScaffoldSequenceComponent {
             let comColor = '#adb5bd'
 
             // mutation circle size
-            let muRadius = squareWidth * 2
+            let muRadius = squareWidth * 1.6
 
             let svgWidth = width + 5 * squareWidth
-
-            if (squareWidth <= 5) {
-                svgWidth += 50
-            }
+            squareWidth <= 5 ? (svgWidth += 50) : (svgWidth += 0)
 
             let svg = d3
                 .select('#content2')
@@ -285,28 +278,26 @@ export class ScaffoldSequenceComponent {
 
             let lastPosition = 0
             let endSquare = false
+
             const drawMutation = (mutation: any) => {
                 this.drawCircle(
                     svg,
                     X,
                     Y + squareWidth * 0.5,
-                    muRadius * mutation.muValues,
+                    muRadius * (mutation.muValues < 0.3 ? 0.3 : mutation.muValues),
                     variantColor(mutation.muValues),
-                    mutation.muValues,
+                    squareWidth,
                     `BP: ${mutation.BP}<br>Mutation degree: ${mutation.muValues}<br>Ref: ${mutation.pRef}<br>P Nuc: ${mutation.pNuc}`
                 )
-                X += 2
-                if (X + squareWidth > width) {
-                    Y += yAdd
-                    X = 0
-                }
             }
 
             const geneCompress = (
                 start: number,
                 end: number,
                 isGene: boolean,
-                geneName: string = ''
+                geneName: string = '',
+                geneStart: number = 0,
+                geneEnd: number = 0
             ) => {
                 let squareNum = Math.floor((end - start) / compressionNum)
                 let squareRemain = Math.floor((end - start) % compressionNum)
@@ -322,56 +313,43 @@ export class ScaffoldSequenceComponent {
                     console.log('lastPosistion:' + lastPosition)
                 }
                 for (let k = 0; k < squareNum; k++) {
-                    if (k == squareNum - 1 && squareRemain) {
-                        lastPosition += squareRemain
-                    } else {
-                        lastPosition += compressionNum
-                    }
+                    k == squareNum - 1 && squareRemain
+                        ? (lastPosition += squareRemain)
+                        : (lastPosition += compressionNum)
 
                     // If the last square, set last to true
-                    if (
-                        (X + squareWidth <= width && X + squareWidth * 2 > width) ||
-                        (endSquare && k === squareNum - 1)
-                    ) {
-                        last = true
-                    }
+                    ;(X + squareWidth <= width && X + squareWidth * 2 > width) ||
+                    (endSquare && k === squareNum - 1)
+                        ? (last = true)
+                        : (last = false)
 
-                    if (X + squareWidth > width) {
-                        Y += yAdd
-                        X = 0
-                    }
+                    if (X + squareWidth > width) (Y += yAdd), (X = 0)
 
-                    if (squareWidth < 5) {
-                        svg.attr('height', Y + 10)
-                    } else {
-                        svg.attr('height', Y + squareWidth + 10)
-                    }
+                    svg.attr('height', squareWidth < 5 ? Y + 10 : Y + squareWidth + 10)
 
-                    if (isGene) {
-                        this.drawGeneRectangle(
-                            svg,
-                            X,
-                            Y,
-                            squareWidth,
-                            squareHeight,
-                            genomeColorL1,
-                            `Gene: ${geneName} &nbsp Start: ${start} &nbsp End: ${end}`,
-                            last,
-                            lastPosition,
-                            geneName
-                        )
-                    } else {
-                        this.drawRectangle(
-                            svg,
-                            X,
-                            Y,
-                            squareWidth,
-                            squareHeight,
-                            comColor,
-                            last,
-                            lastPosition
-                        )
-                    }
+                    isGene
+                        ? this.drawGeneRectangle(
+                              svg,
+                              X,
+                              Y,
+                              squareWidth,
+                              squareHeight,
+                              genomeColorL1,
+                              `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
+                              last,
+                              lastPosition,
+                              geneName
+                          )
+                        : this.drawRectangle(
+                              svg,
+                              X,
+                              Y,
+                              squareWidth,
+                              squareHeight,
+                              comColor,
+                              last,
+                              lastPosition
+                          )
 
                     X += squareWidth
                     last = false
@@ -396,10 +374,10 @@ export class ScaffoldSequenceComponent {
                     // No mutation in the scaffold
                     if (mutations.length === 0) {
                         if (previousPoint > gene.start) {
-                            geneCompress(previousPoint, gene.end, true, gene.name)
+                            geneCompress(previousPoint, gene.end, true, gene.name, gene.start, gene.end)
                         }
-                        geneCompress(previousPoint, gene.start, false, '')
-                        geneCompress(gene.start, gene.end, true, gene.name)
+                        geneCompress(previousPoint, gene.start, false)
+                        geneCompress(gene.start, gene.end, true, gene.name, gene.start, gene.end)
                         continue
                     }
 
@@ -409,22 +387,22 @@ export class ScaffoldSequenceComponent {
 
                         // among previous gene end and current gene start
                         if (mutations[m].BP > previousPoint && mutations[m].BP < start) {
-                            geneCompress(previousPoint, mutations[m].BP, false, '')
+                            geneCompress(previousPoint, mutations[m].BP, false, '', gene.start, gene.end)
                             drawMutation(mutations[m])
 
                             while (m + 1 < mutations.length && mutations[m + 1].BP < start) {
                                 m++
-                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false, '')
+                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false)
                                 drawMutation(mutations[m])
                             }
 
-                            geneCompress(mutations[m].BP, start, false, '')
+                            geneCompress(mutations[m].BP, start, false)
                             hasMutation = true
                             if (
                                 (m + 1 < mutations.length && mutations[m + 1].BP > gene.end) ||
                                 m + 1 >= mutations.length
                             ) {
-                                geneCompress(start, gene.end, true, gene.name)
+                                geneCompress(start, gene.end, true, gene.name, gene.start, gene.end)
                             }
                         }
 
@@ -434,7 +412,7 @@ export class ScaffoldSequenceComponent {
                             if (previousPoint > start) {
                                 start = previousPoint
                             } else if (!hasMutation) {
-                                geneCompress(previousPoint, start, false, '')
+                                geneCompress(previousPoint, start, false)
                             }
 
                             if (mutations[m].BP === start) {
@@ -449,7 +427,7 @@ export class ScaffoldSequenceComponent {
                             }
 
                             if (mutations[m].BP > start && mutations[m].BP < gene.end) {
-                                geneCompress(start, mutations[m].BP, true, gene.name)
+                                geneCompress(start, mutations[m].BP, true, gene.name, gene.start, gene.end)
                                 drawMutation(mutations[m])
 
                                 while (
@@ -462,7 +440,7 @@ export class ScaffoldSequenceComponent {
                                         mutations[m - 1].BP,
                                         mutations[m].BP,
                                         true,
-                                        gene.name
+                                        gene.name, gene.start, gene.end
                                     )
                                     drawMutation(mutations[m])
                                     // mChange = true
@@ -470,16 +448,7 @@ export class ScaffoldSequenceComponent {
                                 }
                             }
 
-                            // if (!mChange) {
-                            geneCompress(mutations[m].BP, gene.end, true, gene.name)
-                            // } else {
-                            //     geneCompress(
-                            //         mutations[m - mChangeTime].BP,
-                            //         gene.end,
-                            //         true,
-                            //         gene.name
-                            //     )
-                            // }
+                            geneCompress(mutations[m].BP, gene.end, true, gene.name, gene.start, gene.end)
 
                             if (mutations[m].BP === gene.end) {
                                 drawMutation(mutations[m])
@@ -498,29 +467,29 @@ export class ScaffoldSequenceComponent {
 
                         // mutation is among the last gene end and scaffold end
                         if (g === lastGene && mutations[m].BP > gene.end) {
-                            geneCompress(gene.end, mutations[m].BP, false, '')
+                            geneCompress(gene.end, mutations[m].BP, false)
                             drawMutation(mutations[m])
                             while (m + 1 < mutations.length && mutations[m].BP > gene.end) {
                                 m++
-                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false, '')
+                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false)
                                 drawMutation(mutations[m])
                             }
                             endSquare = true
                             hasMutation = true
                             muInLastGene = true
-                            geneCompress(mutations[m].BP, data[i].length, false, '')
+                            geneCompress(mutations[m].BP, data[i].length, false)
                         }
                     }
 
                     if (!hasMutation) {
                         if (previousPoint > gene.start) {
-                            geneCompress(previousPoint, gene.end, true, gene.name)
+                            geneCompress(previousPoint, gene.end, true, gene.name, gene.start, gene.end)
                         } else {
-                            geneCompress(previousPoint, gene.start, false, '')
+                            geneCompress(previousPoint, gene.start, false)
                             if (gene.end === data[i].length) {
                                 endSquare = true
                             }
-                            geneCompress(gene.start, gene.end, true, gene.name)
+                            geneCompress(gene.start, gene.end, true, gene.name, gene.start, gene.end)
                         }
                     }
                 }
@@ -529,7 +498,7 @@ export class ScaffoldSequenceComponent {
                 if (data[i].gene[lastGene].end < data[i].length) {
                     endSquare = true
                     if (!muInLastGene) {
-                        geneCompress(data[i].gene[lastGene].end, data[i].length, false, '')
+                        geneCompress(data[i].gene[lastGene].end, data[i].length, false)
                     }
                 }
             }

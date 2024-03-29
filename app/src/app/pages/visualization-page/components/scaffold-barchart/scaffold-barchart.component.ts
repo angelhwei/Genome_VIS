@@ -37,7 +37,8 @@ export class ScaffoldBarchartComponent implements OnInit {
         }
         let margin = { top: 20, right: 30, bottom: 60, left: 90 },
             barWidth = width - margin.left - margin.right - margin.top,
-            barHeight = height - margin.top - margin.bottom
+            barHeight = height - margin.top - margin.bottom,
+            padding = 0.4
         let svg = d3
             .select('#scaffold-barchart')
             .append('svg')
@@ -48,7 +49,7 @@ export class ScaffoldBarchartComponent implements OnInit {
         let x = d3
             .scaleBand()
             .range([0, barWidth])
-            .padding(0.4)
+            .padding(padding)
             .domain(
                 data.map(function (d: any) {
                     return d.chromosome
@@ -93,19 +94,18 @@ export class ScaffoldBarchartComponent implements OnInit {
         let yAxis = d3.axisLeft(y).ticks(3)
 
         svg.append('g').call(yAxis)
-        // Make the y axis line thinner
+        // Make the y axis line and ticks thinner
         svg.selectAll('.domain').style('stroke-width', '0.5px')
-
-        // Make the y axis ticks thinner
         svg.selectAll('.tick line').style('stroke-width', '0.5px')
 
         svg.append('text')
             .attr('transform', 'rotate(-90)')
             .attr('y', 0 - margin.left + 10 + 'px')
-            .attr('x', 0 - barHeight / 2)
+            .attr('x', 0 - barHeight / 2 - 10 + 'px')
             .attr('dy', '1em')
             .style('text-anchor', 'middle')
             .text('Scaffold Length')
+            .attr('font-size', '16px')
             .attr('fill', '#6c757d')
 
         svg.selectAll('myline')
@@ -116,7 +116,7 @@ export class ScaffoldBarchartComponent implements OnInit {
             .attr('y', function (d: any) {
                 return barHeight
             })
-            .attr('width', 7)
+            .attr('width', x.bandwidth())
             .attr('height', function (d) {
                 return 0
             })
@@ -220,7 +220,8 @@ export class ScaffoldBarchartComponent implements OnInit {
                     .transition()
                     .duration(200)
                     .attr('r', function (d: any) {
-                        return d.mutation.muValues * 10 + 5
+                        let r = d.mutation.muValues < 0.3 ? 0.3 * 10 : d.mutation.muValues * 10
+                        return r + 5
                     })
             })
             .on('mouseout', function () {
@@ -229,7 +230,8 @@ export class ScaffoldBarchartComponent implements OnInit {
                     .transition()
                     .duration(200)
                     .attr('r', function (d: any) {
-                        return d.mutation.muValues * 10
+                        let r = d.mutation.muValues < 0.3 ? 0.3 * 10 : d.mutation.muValues * 10
+                        return r
                     })
             })
             .on('click', function (event, d: any) {
@@ -276,7 +278,8 @@ export class ScaffoldBarchartComponent implements OnInit {
                 return y(d.mutation.BP)
             })
             .attr('r', function (d: any) {
-                return d.mutation.muValues * 10
+                let r = d.mutation.muValues < 0.3 ? 0.3 * 10 : d.mutation.muValues * 10
+                return r
             })
             .delay(function (d, i) {
                 return i * 2.5
@@ -297,13 +300,7 @@ export class ScaffoldBarchartComponent implements OnInit {
         //     })
 
         const callEmit = (squareWidth: Number, compressionNum: Number, scaffold: any) => {
-            this.emitData(squareWidth, compressionNum, scaffold)
+            this.shareService.changeData({ squareWidth, compressionNum, scaffold })
         }
-    }
-
-    emitData(squareWidth: Number, compressionNum: Number, scaffold: any) {
-        const data = { squareWidth, compressionNum, scaffold }
-        // this.dataEmitter.emit(data);
-        this.shareService.changeData(data)
     }
 }

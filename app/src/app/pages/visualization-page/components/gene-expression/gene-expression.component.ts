@@ -1,6 +1,8 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core'
+import { Component, OnInit, Input, NgModule } from '@angular/core'
+import { CommonModule } from '@angular/common'
 import { MapComponent } from '../map/map.component'
 import { GeneExpDataService } from '../../../../services/gene-exp-data.service'
+import { SequenceExpressionService } from '../../../../services/sequence-expression.service'
 import * as d3 from 'd3'
 
 interface MarkerProperties {
@@ -13,11 +15,11 @@ interface MarkerProperties {
 @Component({
     selector: 'app-gene-expression',
     standalone: true,
-    imports: [MapComponent],
+    imports: [MapComponent, CommonModule],
     templateUrl: './gene-expression.component.html',
     styleUrl: './gene-expression.component.scss',
 })
-export class GeneExpressionComponent implements OnInit, OnChanges {
+export class GeneExpressionComponent implements OnInit {
     @Input() width!: number
     @Input() height!: number
     @Input() pinClicked!: MarkerProperties
@@ -26,38 +28,80 @@ export class GeneExpressionComponent implements OnInit, OnChanges {
     clickedPin: MarkerProperties | null = null
     data: any
     selected: { name: string; color: string | undefined }[] = []
+    selectedLocation: string[] = []
     color = '#53b3bd'
     highlightColor = '#2D929B'
+    geneName = ''
+    hasInExpression = false
 
-    constructor(private geneExpDataService: GeneExpDataService) {}
+    constructor(
+        private geneExpDataService: GeneExpDataService,
+        private sequenceExpr: SequenceExpressionService
+    ) {}
 
     ngOnInit(): void {
         this.geneExpDataService.fetchGeneExpData().then(data => {
-            // console.log(data);
             this.parallelCoordinates(data)
             this.data = data
         })
+        this.sequenceExpr.currentData.subscribe(data => {
+            if (data) {
+                this.updateStrokeColor(data)
+            }
+        })
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes['geneDetails']) {
-            console.log('geneDetails: ')
-            console.log(this.geneDetails) // You can see the geneDetails in the console
-            this.updateStrokeColor()
-        }
-    }
-
-    updateStrokeColor() {
-        // 更新 stroke 顏色
-        let geneRename = 'ex-' + this.geneDetails.replace(/[^\w\s]|_/g, '').toLowerCase()
+    updateStrokeColor(name: string) {
         d3.selectAll('.line')
             .style('stroke-width', 1)
             .style('opacity', 0.1)
             .style('stroke', this.color)
-        d3.selectAll('.' + geneRename)
-            .style('stroke-width', 4)
-            .style('opacity', 1)
-            .style('stroke', this.highlightColor)
+        if (this.selectedLocation.length < 2) {
+            return
+        }
+
+        for (let i = 0; i < this.data.length; i++) {
+            // console.log(data[i]['Gene'])
+            if (this.data[i]['Gene'] === name) {
+                this.hasInExpression = true
+                break
+            }
+        }
+
+        if (!this.hasInExpression) {
+            console.log('Gene not found in expression data')
+            const existingTooltip = d3.select('#pc-container').select('.tooltip2')
+
+            if (existingTooltip.empty()) {
+                const tooltip2 = d3
+                    .select('#pc-container')
+                    .style('position', 'relative')
+                    .append('div')
+                    .attr('class', 'tooltip2')
+                    .style('background-color', 'rgba(192,36,37,0.8)')
+                    .style('color', '#fff')
+                    .style('border-radius', '5px')
+                    .style('padding', '10px')
+                    .html('Below threshold!')
+                    .style('position', 'absolute')
+                    .style('top', '40%')
+                    .style('left', '50%')
+                    .style('transform', 'translate(-50%, -50%)')
+
+                setTimeout(() => {
+                    tooltip2.remove()
+                    d3.select('#pc-container').style('position', 'static')
+                }, 1000)
+            }
+            return
+        } else {
+            let geneRename = 'ex-' + name.replace(/[^\w\s]|_/g, '').toLowerCase()
+            d3.selectAll('.' + geneRename)
+                .style('stroke-width', 4)
+                .style('opacity', 1)
+                .style('stroke', this.highlightColor)
+        }
+        this.hasInExpression = false
     }
 
     onPinClicked(marker: MarkerProperties) {
@@ -163,6 +207,7 @@ export class GeneExpressionComponent implements OnInit, OnChanges {
             })
 
             let clicked = false
+            let self = this
             btn.addEventListener('click', function () {
                 if (!clicked) {
                     dimensions2.push(this.innerHTML)
@@ -180,6 +225,9 @@ export class GeneExpressionComponent implements OnInit, OnChanges {
                     this.style.color = 'darkgrey'
                     clicked = false
                 }
+                dimensions2.map(location => {
+                    self.selectedLocation.push(location)
+                })
                 drawChart(dimensions2)
                 if (dimensions2.length !== 0) {
                     empty!.style.display = 'none'

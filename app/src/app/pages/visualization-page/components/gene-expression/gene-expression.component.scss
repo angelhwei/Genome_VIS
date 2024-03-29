@@ -1,19 +1,8 @@
-.axis {
-    opacity: 0.4;
-}
-.axis:hover {
-    opacity: 1;
-}
-
 h4 {
     margin-bottom: 0.1rem;
     margin-top: 0.1rem;
     font-size: 0.7rem;
     font-family: 'Quicksand', sans-serif;
-}
-
-.tooltip {
-    pointer-events: none;
 }
 
 #PC {
@@ -66,7 +55,7 @@ h4 {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 50vh;
+    // height: 50vh;
     font-size: 0.8rem;
 }
 
@@ -76,4 +65,27 @@ h4 {
 
 #empty-condition-text {
     color: #fff;
+}
+
+#no-exp {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 1000;
+    // opacity: 0;
+    // width: 500px;
+    animation: appearOnce 1s;
+}
+
+@keyframes appearOnce {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
