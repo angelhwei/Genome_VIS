@@ -264,10 +264,10 @@ export class GeneExpressionComponent implements OnInit {
                 .append('g')
                 .attr('transform', 'translate(' + 40 + ',' + margin.top + ')')
 
-            svg.style('opacity', 0) // start with an opacity of 0
-                .transition() // add a transition
-                .duration(500) // duration of the transition in milliseconds
-                .style('opacity', 1) // end with an opacity of 1
+            svg.style('opacity', 0)
+                .transition()
+                .duration(500)
+                .style('opacity', 1)
 
             let y: { [key: string]: any } = {}
             for (let i in dimensions) {

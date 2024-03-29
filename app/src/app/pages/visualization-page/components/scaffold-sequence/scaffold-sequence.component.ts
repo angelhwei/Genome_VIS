@@ -374,7 +374,14 @@ export class ScaffoldSequenceComponent {
                     // No mutation in the scaffold
                     if (mutations.length === 0) {
                         if (previousPoint > gene.start) {
-                            geneCompress(previousPoint, gene.end, true, gene.name, gene.start, gene.end)
+                            geneCompress(
+                                previousPoint,
+                                gene.end,
+                                true,
+                                gene.name,
+                                gene.start,
+                                gene.end
+                            )
                         }
                         geneCompress(previousPoint, gene.start, false)
                         geneCompress(gene.start, gene.end, true, gene.name, gene.start, gene.end)
@@ -387,7 +394,14 @@ export class ScaffoldSequenceComponent {
 
                         // among previous gene end and current gene start
                         if (mutations[m].BP > previousPoint && mutations[m].BP < start) {
-                            geneCompress(previousPoint, mutations[m].BP, false, '', gene.start, gene.end)
+                            geneCompress(
+                                previousPoint,
+                                mutations[m].BP,
+                                false,
+                                '',
+                                gene.start,
+                                gene.end
+                            )
                             drawMutation(mutations[m])
 
                             while (m + 1 < mutations.length && mutations[m + 1].BP < start) {
@@ -427,7 +441,14 @@ export class ScaffoldSequenceComponent {
                             }
 
                             if (mutations[m].BP > start && mutations[m].BP < gene.end) {
-                                geneCompress(start, mutations[m].BP, true, gene.name, gene.start, gene.end)
+                                geneCompress(
+                                    start,
+                                    mutations[m].BP,
+                                    true,
+                                    gene.name,
+                                    gene.start,
+                                    gene.end
+                                )
                                 drawMutation(mutations[m])
 
                                 while (
@@ -440,7 +461,9 @@ export class ScaffoldSequenceComponent {
                                         mutations[m - 1].BP,
                                         mutations[m].BP,
                                         true,
-                                        gene.name, gene.start, gene.end
+                                        gene.name,
+                                        gene.start,
+                                        gene.end
                                     )
                                     drawMutation(mutations[m])
                                     // mChange = true
@@ -448,7 +471,14 @@ export class ScaffoldSequenceComponent {
                                 }
                             }
 
-                            geneCompress(mutations[m].BP, gene.end, true, gene.name, gene.start, gene.end)
+                            geneCompress(
+                                mutations[m].BP,
+                                gene.end,
+                                true,
+                                gene.name,
+                                gene.start,
+                                gene.end
+                            )
 
                             if (mutations[m].BP === gene.end) {
                                 drawMutation(mutations[m])
@@ -483,13 +513,27 @@ export class ScaffoldSequenceComponent {
 
                     if (!hasMutation) {
                         if (previousPoint > gene.start) {
-                            geneCompress(previousPoint, gene.end, true, gene.name, gene.start, gene.end)
+                            geneCompress(
+                                previousPoint,
+                                gene.end,
+                                true,
+                                gene.name,
+                                gene.start,
+                                gene.end
+                            )
                         } else {
                             geneCompress(previousPoint, gene.start, false)
                             if (gene.end === data[i].length) {
                                 endSquare = true
                             }
-                            geneCompress(gene.start, gene.end, true, gene.name, gene.start, gene.end)
+                            geneCompress(
+                                gene.start,
+                                gene.end,
+                                true,
+                                gene.name,
+                                gene.start,
+                                gene.end
+                            )
                         }
                     }
                 }
