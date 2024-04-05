@@ -67,7 +67,6 @@ export class MapComponent implements OnInit {
                     size: new google.maps.Size(30, 35),
                 }
                 this.markers.push(marker)
-                // console.log(marker.position)
                 this.center = {
                     lat: lat + 0.05,
                     lng: lng,
@@ -109,7 +108,6 @@ export class MapComponent implements OnInit {
             if (index !== -1) {
                 this.selectedColors.splice(index, 1) // Remove the color from the selectedColors array
             }
-            console.log(this.selectedColors)
             clickedMarker.color = '#5c677d'
             clickedMarker.size = new google.maps.Size(30, 35)
             clickedMarker.clicked = false
@@ -137,13 +135,6 @@ export class MapComponent implements OnInit {
         return bounds
     }
 
-    // generateRandomColor(): string {
-    //     const randomR = (Math.floor(Math.random() * 156) + 100).toString(16)
-    //     const randomG = (Math.floor(Math.random() * 156) + 100).toString(16)
-    //     const randomB = (Math.floor(Math.random() * 156) + 100).toString(16)
-    //     return '#' + randomR + randomG + randomB
-    // }
-
     generateRandomColor() {
         let index = Math.floor(Math.random() * this.colors.length)
         let color = this.colors[index]
@@ -157,4 +148,11 @@ export class MapComponent implements OnInit {
 
         return color
     }
+
+    // generateRandomColor(): string {
+    //     const randomR = (Math.floor(Math.random() * 156) + 100).toString(16)
+    //     const randomG = (Math.floor(Math.random() * 156) + 100).toString(16)
+    //     const randomB = (Math.floor(Math.random() * 156) + 100).toString(16)
+    //     return '#' + randomR + randomG + randomB
+    // }
 }

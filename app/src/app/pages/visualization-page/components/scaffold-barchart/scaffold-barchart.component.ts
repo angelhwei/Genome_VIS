@@ -90,10 +90,12 @@ export class ScaffoldBarchartComponent implements OnInit {
             return d.length
         })
         let maxLen = Math.floor(Math.max(...lengths))
-        let y = d3.scaleLog().domain([10000, maxLen]).range([barHeight, 0])
-        let yAxis = d3.axisLeft(y).ticks(3)
+        let y = d3.scaleLog([10000, maxLen], [barHeight, 0]).base(2) // d3.scaleLog([domain],[range])
+        let yAxis = d3.axisLeft(y).ticks(3).tickFormat(d3.format('.0s'))
 
-        svg.append('g').call(yAxis)
+        svg.append('g')
+            .call(yAxis)
+            .call(g => g.select('.domain').remove())
         // Make the y axis line and ticks thinner
         svg.selectAll('.domain').style('stroke-width', '0.5px')
         svg.selectAll('.tick line').style('stroke-width', '0.5px')
@@ -151,7 +153,6 @@ export class ScaffoldBarchartComponent implements OnInit {
                     .attr('y', y(d.length) - 1)
 
                 callEmit(10, 1000, d.chromosome)
-                // console.log(d.chromosome);
                 d3.select('#chr_name').text(d.chromosome)
                 d3.select('#content2').text('') // Clear the content
                 d3.select('#content2')
@@ -194,8 +195,12 @@ export class ScaffoldBarchartComponent implements OnInit {
             .attr('cx', (d: any) => (x(d.chromosome) as any) + x.bandwidth() / 2)
             .attr('cy', function (d: any) {
                 if (!d.mutation.BP) {
-                    console.log('d.chomosome:', d.chromosome)
-                    console.log('d.mutation.BP:', d.mutation.BP)
+                    console.log(
+                        'Error: BP is undefined, d.chomosome:' +
+                            d.chromosome +
+                            'd.mutation.BP:' +
+                            d.mutation.BP
+                    )
                 }
                 return y(d.mutation.BP)
             })
@@ -212,10 +217,7 @@ export class ScaffoldBarchartComponent implements OnInit {
                     )
                     .style('left', event.clientX + 70 + 'px')
                     .style('top', event.clientY + 'px')
-                    .style('background-color', 'rgba(0, 0, 0, 0.8)')
-                    .style('color', '#fff')
-                    .style('border-radius', '5px')
-                    .style('padding', '5px')
+
                 d3.select(this)
                     .transition()
                     .duration(200)

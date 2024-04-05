@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { MapComponent } from '../map/map.component'
 import { GeneExpDataService } from '../../../../services/gene-exp-data.service'
 import { SequenceExpressionService } from '../../../../services/sequence-expression.service'
+import { DataService } from '../../../../services/data.service'
 import * as d3 from 'd3'
 
 interface MarkerProperties {
@@ -27,16 +28,18 @@ export class GeneExpressionComponent implements OnInit {
 
     clickedPin: MarkerProperties | null = null
     data: any
+    mutationData: any
     selected: { name: string; color: string | undefined }[] = []
     selectedLocation: string[] = []
     color = '#53b3bd'
     highlightColor = '#2D929B'
     geneName = ''
-    hasInExpression = false
+    geneHasMu: string[] = []
 
     constructor(
         private geneExpDataService: GeneExpDataService,
-        private sequenceExpr: SequenceExpressionService
+        private sequenceExpr: SequenceExpressionService,
+        private dataService: DataService
     ) {}
 
     ngOnInit(): void {
@@ -49,26 +52,47 @@ export class GeneExpressionComponent implements OnInit {
                 this.updateStrokeColor(data)
             }
         })
+        this.sequenceExpr.genHasMu.subscribe(data => {
+            if (data) {
+                this.geneHasMu = data
+                this.geneHasMutation(data)
+            }
+        })
+        this.dataService.fetchData().then(data => {
+            this.mutationData = data.filter((d: any) => d.mutation.length > 0)
+        })
     }
 
-    updateStrokeColor(name: string) {
-        d3.selectAll('.line')
-            .style('stroke-width', 1)
-            .style('opacity', 0.1)
-            .style('stroke', this.color)
+    geneHasMutation(geneHasMu: string[] = []) {
+        // console.log('geneHasMutation: ')
+        // console.log(geneHasMu)
+
+        d3.selectAll('.line').style('stroke-width', 1).style('opacity', 0.1)
+        if (geneHasMu.length !== 0) {
+            this.data.forEach((d: any) => {
+                let geneRename = 'ex-' + d.Gene.replace(/[^\w\s]|_/g, '').toLowerCase()
+                if (geneHasMu.includes(d.Gene)) {
+                    d3.selectAll('.' + geneRename)
+                        .style('stroke-width', 1)
+                        .style('stroke', 'rgba(192,36,37,0.5)')
+                        .style('opacity', 1)
+                        .raise()
+                }
+            })
+        }
+    }
+
+    updateStrokeColor(name: string = '') {
+        // if gene has mutation, highlight the line
         if (this.selectedLocation.length < 2) {
             return
         }
 
-        for (let i = 0; i < this.data.length; i++) {
-            // console.log(data[i]['Gene'])
-            if (this.data[i]['Gene'] === name) {
-                this.hasInExpression = true
-                break
-            }
-        }
+        // d3.selectAll('.line').style('stroke-width', 1).style('opacity', 0.1)
+        this.geneHasMutation(this.geneHasMu)
+        let hasInExpression = this.data.some((el: any) => el['Gene'] === name)
 
-        if (!this.hasInExpression) {
+        if (!hasInExpression) {
             console.log('Gene not found in expression data')
             const existingTooltip = d3.select('#pc-container').select('.tooltip2')
 
@@ -99,9 +123,8 @@ export class GeneExpressionComponent implements OnInit {
             d3.selectAll('.' + geneRename)
                 .style('stroke-width', 4)
                 .style('opacity', 1)
-                .style('stroke', this.highlightColor)
         }
-        this.hasInExpression = false
+        hasInExpression = false
     }
 
     onPinClicked(marker: MarkerProperties) {
@@ -155,8 +178,8 @@ export class GeneExpressionComponent implements OnInit {
                     color: this.clickedPin?.color, // Add color information
                 }))
             this.selected.push(...matchingColumns)
-            console.log('this.selected: ')
-            console.log(this.selected)
+            // console.log('this.selected: ')
+            // console.log(this.selected)
         }
 
         if (!this.clickedPin?.clicked) {
@@ -264,10 +287,7 @@ export class GeneExpressionComponent implements OnInit {
                 .append('g')
                 .attr('transform', 'translate(' + 40 + ',' + margin.top + ')')
 
-            svg.style('opacity', 0)
-                .transition()
-                .duration(500)
-                .style('opacity', 1)
+            svg.style('opacity', 0).transition().duration(500).style('opacity', 1)
 
             let y: { [key: string]: any } = {}
             for (let i in dimensions) {
@@ -348,10 +368,7 @@ export class GeneExpressionComponent implements OnInit {
                 .style('opacity', 0.1)
                 .style('cursor', 'pointer')
                 .on('mouseover', function (event: any, d: any) {
-                    d3.select(this)
-                        .style('stroke', '#53b3bd')
-                        .style('stroke-width', 4)
-                        .style('opacity', '1')
+                    d3.select(this).style('stroke-width', 4).style('opacity', '1')
 
                     let tooltipWidth = 200 // Replace with your tooltip width
                     let tooltipHeight = 80
@@ -386,10 +403,7 @@ export class GeneExpressionComponent implements OnInit {
                         })
                 })
                 .on('mouseleave', function () {
-                    d3.selectAll('.line')
-                        .style('stroke', '#53b3bd')
-                        .style('opacity', '0.1')
-                        .style('stroke-width', 1)
+                    d3.selectAll('.line').style('opacity', '0.1').style('stroke-width', 1)
                     tooltip.style('opacity', 0)
                 })
 
@@ -434,8 +448,8 @@ export class GeneExpressionComponent implements OnInit {
                     }
                     let item = self.selected.find(item => item.name === d)
                     let color = item?.color as string
-                    console.log('item: ')
-                    console.log(item?.color)
+                    // console.log('item: ')
+                    // console.log(item?.color)
 
                     return item ? color : '#4f6d7a'
                 })

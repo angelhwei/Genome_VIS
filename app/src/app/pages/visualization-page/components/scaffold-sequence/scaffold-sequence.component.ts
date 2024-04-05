@@ -57,7 +57,7 @@ export class ScaffoldSequenceComponent {
     }
 
     handleClick() {
-        d3.select('#content2').text('') // Clear the content
+        d3.select('#content2').text('')
         this.handleData()
     }
 
@@ -90,7 +90,6 @@ export class ScaffoldSequenceComponent {
             .attr('cursor', 'pointer')
 
         // circle.raise();
-        // Create a tooltip
         const tooltip = d3
             .select('#content2')
             .append('div')
@@ -104,14 +103,33 @@ export class ScaffoldSequenceComponent {
             .style('pointer-events', 'none')
             .style('z-index', '100')
 
-        // Add event handlers
+        let tooltipWidth = 200 // Replace with your tooltip width
+        let tooltipHeight = 80
+        let container = d3.select('#content2') // Replace with your container selector
+        let containerNode = container.node() as Element
+        let containerRect = containerNode ? containerNode.getBoundingClientRect() : null
+
         circle
             .on('mouseover', (event: any) => {
                 tooltip.style('opacity', 1)
                 tooltip
                     .html(details)
-                    .style('left', event.pageX + 2 + 'px')
-                    .style('top', event.pageY - 2 + 'px')
+                    .style('top', function () {
+                        let pageY = event.pageY
+                        if (containerRect && pageY + tooltipHeight > containerRect.bottom) {
+                            return containerRect.bottom - tooltipHeight + 'px' // If the tooltip would go off the bottom of the container, move it up
+                        } else {
+                            return pageY - tooltipHeight + 'px'
+                        }
+                    })
+                    .style('left', function () {
+                        let pageX = event.pageX
+                        if (containerRect && pageX + tooltipWidth > containerRect.right) {
+                            return containerRect.right - tooltipWidth + 'px' // If the tooltip would go off the right of the container, move it left
+                        } else {
+                            return pageX - tooltipWidth + 220 + 'px'
+                        }
+                    })
 
                 d3.select(event.target).style('stroke', '#c02425').style('stroke-width', '2px')
             })
@@ -131,7 +149,6 @@ export class ScaffoldSequenceComponent {
         last: any,
         lastPosition: any
     ) {
-        // Append a rectangle element to the SVG
         const rectangle = svg
             .append('rect')
             .attr('x', x)
@@ -140,6 +157,7 @@ export class ScaffoldSequenceComponent {
             .attr('height', h)
             .attr('fill', c)
             .style('opacity', 0.7)
+
         rectangle.lower()
 
         if (last) {
@@ -188,6 +206,7 @@ export class ScaffoldSequenceComponent {
             .attr('fill', c)
             .style('opacity', 0.7)
             .attr('cursor', 'pointer')
+
         rectangle.lower()
 
         if (last) {
@@ -219,7 +238,6 @@ export class ScaffoldSequenceComponent {
             .style('pointer-events', 'none')
             .style('z-index', '100')
 
-        // Add event handlers
         rectangle
             .on('mouseover', (event: any) => {
                 tooltip.style('opacity', 1)
@@ -362,14 +380,13 @@ export class ScaffoldSequenceComponent {
                 let lastGene = data[i].gene.length - 1
                 let muInLastGene = false
                 let mutations = data[i].mutation
+                let geneHasMutation = [] as any
 
                 // Enter selected scaffold
                 for (let g = 0; g < data[i].gene.length; g++) {
                     let gene = data[i].gene[g]
                     let previousPoint = g === 0 ? 0 : data[i].gene[g - 1].end
                     let hasMutation = false
-                    // let mChange = false
-                    // let mChangeTime = 0
 
                     // No mutation in the scaffold
                     if (mutations.length === 0) {
@@ -392,16 +409,9 @@ export class ScaffoldSequenceComponent {
                     for (let m = 0; m < mutations.length; m++) {
                         let start = gene.start
 
-                        // among previous gene end and current gene start
+                        // Among previous gene end and current gene start
                         if (mutations[m].BP > previousPoint && mutations[m].BP < start) {
-                            geneCompress(
-                                previousPoint,
-                                mutations[m].BP,
-                                false,
-                                '',
-                                gene.start,
-                                gene.end
-                            )
+                            geneCompress(previousPoint, mutations[m].BP, false)
                             drawMutation(mutations[m])
 
                             while (m + 1 < mutations.length && mutations[m + 1].BP < start) {
@@ -412,6 +422,8 @@ export class ScaffoldSequenceComponent {
 
                             geneCompress(mutations[m].BP, start, false)
                             hasMutation = true
+
+                            // If next mutation is not in the current gene or no more mutation
                             if (
                                 (m + 1 < mutations.length && mutations[m + 1].BP > gene.end) ||
                                 m + 1 >= mutations.length
@@ -420,7 +432,7 @@ export class ScaffoldSequenceComponent {
                             }
                         }
 
-                        // among current gene start and end
+                        // Among current gene start and end
                         if (mutations[m].BP >= start && mutations[m].BP <= gene.end) {
                             // current gene start is smaller than previous point
                             if (previousPoint > start) {
@@ -429,6 +441,7 @@ export class ScaffoldSequenceComponent {
                                 geneCompress(previousPoint, start, false)
                             }
 
+                            // Mutation is at the start point
                             if (mutations[m].BP === start) {
                                 drawMutation(mutations[m])
 
@@ -440,6 +453,7 @@ export class ScaffoldSequenceComponent {
                                 }
                             }
 
+                            // Mutation is among the gene start and end
                             if (mutations[m].BP > start && mutations[m].BP < gene.end) {
                                 geneCompress(
                                     start,
@@ -466,8 +480,6 @@ export class ScaffoldSequenceComponent {
                                         gene.end
                                     )
                                     drawMutation(mutations[m])
-                                    // mChange = true
-                                    // mChangeTime++
                                 }
                             }
 
@@ -480,6 +492,7 @@ export class ScaffoldSequenceComponent {
                                 gene.end
                             )
 
+                            // Mutation is at the end point
                             if (mutations[m].BP === gene.end) {
                                 drawMutation(mutations[m])
                                 // multiMutation()
@@ -493,6 +506,9 @@ export class ScaffoldSequenceComponent {
                             }
 
                             hasMutation = true
+                            if (geneHasMutation.includes(gene.name) === false) {
+                                geneHasMutation.push(gene.name)
+                            }
                         }
 
                         // mutation is among the last gene end and scaffold end
@@ -511,6 +527,7 @@ export class ScaffoldSequenceComponent {
                         }
                     }
 
+                    // Current gene do not have mutation
                     if (!hasMutation) {
                         if (previousPoint > gene.start) {
                             geneCompress(
@@ -545,6 +562,7 @@ export class ScaffoldSequenceComponent {
                         geneCompress(data[i].gene[lastGene].end, data[i].length, false)
                     }
                 }
+                this.sequenceExpr.geneHasMu(geneHasMutation)
             }
         })
     }
