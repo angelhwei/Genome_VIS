@@ -1,42 +1,55 @@
 <div class="form">
     <div class="form-title"><span>Scaffold:</span>&nbsp;<span id="chr_name"></span></div>
-    <div class="container">
-        <mat-form-field appearance="outline" [color]="colorControl.value!" class="dense-2">
-            <mat-label>Square size</mat-label>
-            <input
-                matInput
-                type="number"
-                id="square-size-input"
-                min="1"
-                max="100"
-                [(ngModel)]="squareWidth"
-            />
-        </mat-form-field>
-        <mat-form-field appearance="outline" [color]="colorControl.value!" class="dense-2">
-            <mat-label>Compression</mat-label>
-            <input
-                matInput
-                type="number"
-                id="compression-input"
-                min="10"
-                max="10000"
-                [(ngModel)]="compressionNum"
-            />
-        </mat-form-field>
-        <div>
-            <button
-                class="btn"
-                mat-stroked-button
-                matTooltip="zoom in and zoom out!"
-                (click)="handleClick()"
-            >
-                Update
-            </button>
-        </div>
-    </div>
+        <form #form="ngForm" class="container">
+            <mat-form-field appearance="outline" [color]="colorControl.value!" class="dense-2">
+                <mat-label>Square size</mat-label>
+                <input
+                    matInput
+                    name="squareSize"
+                    matTooltip="Between 1 and 30!"
+                    type="number"
+                    id="square-size-input"
+                    min="1"
+                    max="30"
+                    [(ngModel)]="squareWidth"
+                    #squareSize="ngModel"
+                    (blur)="updateErrorMessage()"
+                    required
+                />
+                <mat-error *ngIf="squareSize.invalid">{{ errorMessage }}</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" [color]="colorControl.value!" class="dense-2">
+                <mat-label>Compression</mat-label>
+                <input
+                    matInput
+                    name="compressionNum"
+                    matTooltip="Between 100 and 10000!"
+                    type="number"
+                    id="compression-input"
+                    min="100"
+                    max="10000"
+                    [(ngModel)]="compressionNum"
+                    #squareCompress="ngModel"
+                    (blur)="updateErrorMessage()"
+                    required
+                />
+                <mat-error *ngIf="squareCompress.invalid">{{ errorMessage }}</mat-error>
+            </mat-form-field>
+            <div>
+                <button
+                    class="btn"
+                    mat-stroked-button
+                    matTooltip="zoom in and zoom out!"
+                    (click)="handleClick()"
+                    [disabled]="!form.valid || !scaffold"
+                >
+                    Update
+                </button>
+            </div>
+        </form>
 </div>
 <div class="sequence" id="content2">
-    <div class="empty-text">
+    <div class="empty-text" #emptyText>
         <p>Clicking the above barchart to show sequence details.</p>
     </div>
 </div>

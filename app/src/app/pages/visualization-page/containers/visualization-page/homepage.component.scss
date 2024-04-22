@@ -22,8 +22,8 @@
     display: grid;
     padding: 1%;
     grid:
-        'span9 span9 span9 span9 span9 span9 span9 span9 span3 span3 span3 span3' 4fr
-        'span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span3 span3 span3 span3' 7fr
+        'span9 span9 span9 span9 span9 span9 span9 span9 span3 span3 span3 span3' 3fr
+        'span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span3 span3 span3 span3' 8fr
         / 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
     gap: 15px;
 }
@@ -46,6 +46,8 @@
 }
 
 .title {
+    position: sticky;
+    top: 0;
     width: 50%;
     padding: 10px;
     font-size: min(1.2vw, 2rem);
@@ -79,9 +81,9 @@
     display: none;
 }
 
-.barchart-container {
-    overflow-y: hidden;
-}
+// .barchart-container {
+//     overflow-y: hidden;
+// }
 
 :host ::ng-deep .mdc-text-field--outlined {
     --mdc-outlined-text-field-container-shape: 28px;

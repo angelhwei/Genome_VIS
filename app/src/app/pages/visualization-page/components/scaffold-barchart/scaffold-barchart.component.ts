@@ -35,15 +35,15 @@ export class ScaffoldBarchartComponent implements OnInit {
             width = this.width
             height = this.height * 0.7
         }
-        let margin = { top: 20, right: 30, bottom: 60, left: 90 },
+        let margin = { top: 15, right: 30, bottom: 20, left: 90 },
             barWidth = width - margin.left - margin.right - margin.top,
-            barHeight = height - margin.top - margin.bottom,
+            barHeight = height - margin.top - margin.bottom - 30,
             padding = 0.4
         let svg = d3
             .select('#scaffold-barchart')
             .append('svg')
             .attr('width', width)
-            .attr('height', height + margin.right + margin.bottom + margin.left)
+            .attr('height', barHeight + height / 2 + margin.top + margin.bottom)
             .append('g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
         let x = d3
@@ -72,7 +72,13 @@ export class ScaffoldBarchartComponent implements OnInit {
             .selectAll('text')
             .attr('transform', 'translate(-10,0)rotate(-45)')
             .style('text-anchor', 'end')
-            .attr('font-size', '7px')
+            .attr('font-size', '0.4vw')
+            .on('mouseover', function (event, d: any) {
+                d3.select(this).attr('font-size', '0.8vw')
+            })
+            .on('mouseout', function (event, d: any) {
+                d3.select(this).attr('font-size', '0.4vw')
+            })
 
         const tooltip = d3
             .select('#scaffold-barchart')
@@ -104,10 +110,10 @@ export class ScaffoldBarchartComponent implements OnInit {
             .attr('transform', 'rotate(-90)')
             .attr('y', 0 - margin.left + 10 + 'px')
             .attr('x', 0 - barHeight / 2 - 10 + 'px')
-            .attr('dy', '1em')
+            .attr('dy', '1.5em')
             .style('text-anchor', 'middle')
-            .text('Scaffold Length')
-            .attr('font-size', '16px')
+            .text('Scaffold Length (log)')
+            .attr('font-size', '12px')
             .attr('fill', '#6c757d')
 
         svg.selectAll('myline')
@@ -147,9 +153,9 @@ export class ScaffoldBarchartComponent implements OnInit {
                 d3.select('svg')
                     .append('image')
                     .attr('xlink:href', '../../../../../assets/down2.png')
-                    .attr('width', 15 + 'px')
-                    .attr('height', 15 + 'px')
-                    .attr('x', (x(d.chromosome) || 0) + 86)
+                    .attr('width', 10 + 'px')
+                    .attr('height', 10 + 'px')
+                    .attr('x', (x(d.chromosome) || 0) + 88)
                     .attr('y', y(d.length) - 1)
 
                 callEmit(10, 1000, d.chromosome)
@@ -165,7 +171,7 @@ export class ScaffoldBarchartComponent implements OnInit {
         // Animation
         svg.selectAll('rect')
             .transition()
-            .duration(500)
+            .duration(300)
             .attr('y', function (d: any) {
                 return y(d.length)
             })
