@@ -31,16 +31,11 @@ export class MapComponent implements OnInit {
     center: { lat: number; lng: number }
     markers: MarkerProperties[] = []
     colors = [
-        '#eb5e55',
-        '#168aad',
-        '#e07a5f',
-        '#8e7dbe',
-        '#90be6d',
+        '#b8b8ff',
+        '#8fb996',
         '#ffb950',
         '#86bbd8',
         '#f7af9d',
-        '#a5a58d',
-        '#cb997e',
     ]
     selectedColors = [] as Array<string>
 
@@ -62,7 +57,7 @@ export class MapComponent implements OnInit {
                         lng: lng,
                     },
                     name: data.Name,
-                    color: '#5c677d',
+                    color: '#adb5bd',
                     clicked: false,
                     size: new google.maps.Size(30, 35),
                 }
@@ -91,15 +86,15 @@ export class MapComponent implements OnInit {
                 scaledSize: marker.size,
             },
             label: {
-                color: 'white', // replace 'red' with the color you want to use for the label
+                color: '#5c677d', // replace 'red' with the color you want to use for the label
                 text: marker.name,
-                fontSize: '10px',
+                fontSize: '12px',
             },
         }
     }
 
     onMarkerClick(clickedMarker: MarkerProperties) {
-        if (clickedMarker.color == '#5c677d') {
+        if (clickedMarker.color == '#adb5bd') {
             clickedMarker.color = this.generateRandomColor()
             clickedMarker.size = new google.maps.Size(35, 40)
             clickedMarker.clicked = true
@@ -108,7 +103,7 @@ export class MapComponent implements OnInit {
             if (index !== -1) {
                 this.selectedColors.splice(index, 1) // Remove the color from the selectedColors array
             }
-            clickedMarker.color = '#5c677d'
+            clickedMarker.color = '#adb5bd'
             clickedMarker.size = new google.maps.Size(30, 35)
             clickedMarker.clicked = false
         }

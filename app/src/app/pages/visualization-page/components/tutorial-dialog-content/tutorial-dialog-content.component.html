@@ -1,0 +1,156 @@
+<h2 mat-dialog-title>System Tutorial</h2>
+<mat-dialog-content class="mat-typography">
+    <h3>What is VariaVisio</h3>
+    <p>
+        VariaVisio is a web application that allows users to visualize and analyze population
+        genomic data from different locations. The application is built using Angular, TypeScript,
+        and D3.js.
+    </p>
+    <h3>Chromosome/Scaffold View</h3>
+    <div class="view-img"><img src="../../../../../assets/chr_view.png" alt="" /></div>
+    <p>
+        The chromosome/scaffold view shows genetic information in a straight line format. Each
+        chromosome or scaffold is like a bar on the chart, and its length on the chart represents
+        its actual length in DNA.
+    </p>
+    <ul>
+        <li>
+            <strong>Chromosome/Scaffold Bars:</strong> Each bar represents a chromosome or scaffold.
+            The length of the bar shows how long that chromosome or scaffold is.
+        </li>
+        <li>
+            <strong>Red Circles:</strong> Mutations, like changes in the DNA called SNPs, are shown
+            as red circles on the chart. Bigger circles mean there are more mutations in that area.
+        </li>
+        <li>
+            <strong>Details:</strong> When you move your mouse over a bar or circle:
+            <ul>
+                <li>Chromosome/Scaffold Info: You see how long that chromosome or scaffold is.</li>
+                <li>Mutation Count: You see how many mutations (SNPs) are there.</li>
+                <li>Mutation Position: It shows where exactly these mutations are located.</li>
+                <li>
+                    Mutation Degree: It tells you how important or big these mutations are, shown by
+                    the size of the circle.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>Sequence View</h3>
+    <div class="view-img"><img src="../../../../../assets/seq_view.png" alt="" /></div>
+    <p>
+        The sequence view shows the complete sequence of a chromosome or scaffold, which can let you
+        check the specific position of the mutation. The sequence is compressed using the letters A,
+        T, C, and G into blocks. By default, 1000 base pairs are compressed into one block for
+        visualization purposes. You can customize the size of the blocks and the level of
+        compression to navigate the sequence more effectively. At the end of the sequence, you can
+        check the position of the sequence.
+    </p>
+    <div class="view-img"><img src="../../../../../assets/seq_view2.png" alt="" /></div>
+    <ul>
+        <li>
+            <strong>Setting Panel:</strong> You can customize the size of the blocks and the
+            compression degree of the sequence.
+        </li>
+        <li>
+            <strong
+                >Gray sequence
+                <img
+                    class="view-legend"
+                    src="../../../../../assets/seq_view_nonlegend.png"
+                    alt=""
+                />:</strong
+            >
+            The gray sequence is represented as non-coding gene.
+        </li>
+        <li>
+            <strong
+                >Blue sequence
+                <img
+                    class="view-legend"
+                    src="../../../../../assets/seq_view_genelegend.png"
+                    alt=""
+                />:</strong
+            >
+            The blue sequence is represented as gene.
+        </li>
+        <li>
+            <strong>Circles:</strong> Mutations, like changes in the DNA called SNPs, are shown as
+            red circles on the chart. Bigger
+            <img style="width: 4rem" src="../../../../../assets/seq_view_musizelegend.png" alt="" />
+            and color more red circles mean there are more mutations in that area.
+            <img style="width: 5rem" src="../../../../../assets/seq_view_mulegend.png" alt="" />
+        </li>
+        <li>
+            <strong>Details:</strong> When you move your mouse over the gene sequence or circle:
+            <ul>
+                <li>Gene Info: You see the gene name and its position.</li>
+                <li>Mutation Position: It shows where exactly these mutations are located.</li>
+                <li>
+                    Mutation Degree: It tells you how important or big these mutations are, shown by
+                    the size of the circle.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>Gene Expression View</h3>
+    <div class="view-img2" id="expression">
+        <img src="../../../../../assets/exp_view.png" alt="" />
+    </div>
+    <p>
+        The gene expression view illustrates how genes are expressed under various conditions.
+        Here's a refined description of its features:
+    </p>
+    <ul>
+        <li>
+            Map View: Initially, you'll see a map view displaying the locations of different
+            samples. Each location is marked with a pin. Clicking on a pin reveals the specific
+            conditions associated with that location.
+        </li>
+        <li>
+            Condition Buttons: After selecting a location, you can click on condition buttons to
+            access the Principal Component (PC) view.
+        </li>
+        <li>
+            PC View: In the PC view:
+            <ul>
+                <li>Each axis represents a different condition.</li>
+                <li>Font color corresponds to the location marked on the map.</li>
+                <li>
+                    Each line represents a gene, displaying its expression data across the selected
+                    conditions.
+                </li>
+            </ul>
+        </li>
+        <li>
+            Hover Details: Hovering over a gene line provides detailed information about the gene's
+            expression level under the specified conditions.
+        </li>
+    </ul>
+    <p>
+        This interactive visualization tool allows users to explore gene expression patterns across
+        various conditions and locations, providing insights into how genes behave under different
+        experimental setups.
+    </p>
+
+    <h3>Interaction between Sequence View and Gene Expression View</h3>
+    <div class="view-img"><img src="../../../../../assets/exp_seq_interaction.png" alt="" /></div>
+    <p>
+        The sequence view and gene expression view are interconnected to facilitate analysis of the
+        relationship between mutations and gene expression level. When you hover over a gene in the sequence view:</p>
+    <ul>
+        <li>
+            Gene Expression View Highlight: Genes that meet or exceed a certain expression threshold
+            are highlighted in the gene expression view.
+        </li>
+        <li>
+            Mutation Highlight: If a gene has a mutation, its corresponding gene line in the gene
+            expression view turns red to draw attention to the mutation.
+        </li>
+    </ul>
+
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>

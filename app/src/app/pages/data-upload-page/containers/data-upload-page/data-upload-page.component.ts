@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { DataUploadComponent } from '../../components/ingex';
+import { DataUploadComponent } from '../../components';
 
 @Component({
   selector: 'app-data-upload-page',

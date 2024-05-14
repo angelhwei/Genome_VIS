@@ -3,6 +3,7 @@ import { NavbarComponent } from './navbar/navbar.component'
 import { ScaffoldBarchartComponent } from './scaffold-barchart/scaffold-barchart.component'
 import { ScaffoldSequenceComponent } from './scaffold-sequence/scaffold-sequence.component'
 import { MapComponent } from './map/map.component'
+import { TutorialDialogContentComponent } from './tutorial-dialog-content/tutorial-dialog-content.component'
 
 export const components = [
     GeneExpressionComponent,
@@ -10,6 +11,7 @@ export const components = [
     ScaffoldBarchartComponent,
     ScaffoldSequenceComponent,
     MapComponent,
+    TutorialDialogContentComponent
 ]
 
 export * from './gene-expression/gene-expression.component'

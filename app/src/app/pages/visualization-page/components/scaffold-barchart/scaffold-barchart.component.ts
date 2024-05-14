@@ -35,15 +35,15 @@ export class ScaffoldBarchartComponent implements OnInit {
             width = this.width
             height = this.height * 0.7
         }
-        let margin = { top: 15, right: 30, bottom: 20, left: 90 },
+        let margin = { top: 15, right: 30, bottom: 35, left: 90 },
             barWidth = width - margin.left - margin.right - margin.top,
-            barHeight = height - margin.top - margin.bottom - 30,
+            barHeight = height - margin.top - margin.bottom * 2,
             padding = 0.4
         let svg = d3
             .select('#scaffold-barchart')
             .append('svg')
             .attr('width', width)
-            .attr('height', barHeight + height / 2 + margin.top + margin.bottom)
+            .attr('height', barHeight + height / 2 + 5)
             .append('g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
         let x = d3
@@ -72,13 +72,8 @@ export class ScaffoldBarchartComponent implements OnInit {
             .selectAll('text')
             .attr('transform', 'translate(-10,0)rotate(-45)')
             .style('text-anchor', 'end')
-            .attr('font-size', '0.4vw')
-            .on('mouseover', function (event, d: any) {
-                d3.select(this).attr('font-size', '0.8vw')
-            })
-            .on('mouseout', function (event, d: any) {
-                d3.select(this).attr('font-size', '0.4vw')
-            })
+            .attr('font-size', '0.6vw')
+            .attr('cursor', 'default')
 
         const tooltip = d3
             .select('#scaffold-barchart')
@@ -112,7 +107,7 @@ export class ScaffoldBarchartComponent implements OnInit {
             .attr('x', 0 - barHeight / 2 - 10 + 'px')
             .attr('dy', '1.5em')
             .style('text-anchor', 'middle')
-            .text('Scaffold Length (log)')
+            .text('Length (log)')
             .attr('font-size', '12px')
             .attr('fill', '#6c757d')
 
@@ -129,34 +124,36 @@ export class ScaffoldBarchartComponent implements OnInit {
                 return 0
             })
             .attr('fill', '#adb5bd')
-            .attr('class', (d: any) => `bar-${d.chromosome}`)
+            .attr('class', (d: any) => `bar-${d.chromosome.replace(/[^a-zA-Z0-9]/g, '')}`)
             .attr('cursor', 'pointer')
             .on('mouseover', function (event, d: any) {
-                tooltip.transition().duration(200).style('opacity', 1)
-                tooltip.html(`Chr: ${d.chromosome} Length: ${d.length}`)
+                tooltip.style('opacity', 1)
+                tooltip.html(
+                    `Chr: ${d.chromosome} <br /> Length: ${d.length} <br /> Mutation Count: ${d.mutation.length}`
+                )
                 tooltip.style('top', event.pageY - 35 + 'px').style('left', event.pageX + 5 + 'px')
 
                 d3.select(this).style('fill', '#5c677d')
             })
             .on('mouseout', function () {
-                tooltip.transition().duration(200).style('opacity', 0)
+                tooltip.style('opacity', 0)
                 d3.select(this).style('fill', '#adb5bd')
             })
             .on('click', function (event, d: any) {
                 // Remove any existing images
-                d3.selectAll('image').remove()
+                // d3.selectAll('image').remove()
                 d3.selectAll('rect').style('stroke', 'none')
                 d3.selectAll('circle').attr('stroke', 'none')
-                d3.select(this).style('stroke-width', '2').style('stroke', '#5c677d')
+                d3.select(this).style('stroke-width', '4').style('stroke', '#5c677d')
 
                 // Add an image above the clicked bar
-                d3.select('svg')
-                    .append('image')
-                    .attr('xlink:href', '../../../../../assets/down2.png')
-                    .attr('width', 10 + 'px')
-                    .attr('height', 10 + 'px')
-                    .attr('x', (x(d.chromosome) || 0) + 88)
-                    .attr('y', y(d.length) - 1)
+                // d3.select('svg')
+                //     .append('image')
+                //     .attr('xlink:href', '../../../../../assets/down2.png')
+                //     .attr('width', 15 + 'px')
+                //     .attr('height', 15 + 'px')
+                //     .attr('x', (x(d.chromosome) || 0) + 88)
+                //     .attr('y', y(d.length) - 1)
 
                 callEmit(10, 1000, d.chromosome)
                 d3.select('#chr_name').text(d.chromosome)
@@ -192,6 +189,18 @@ export class ScaffoldBarchartComponent implements OnInit {
             return acc
         }, [])
 
+        const tooltip2 = d3
+            .select('#scaffold-barchart')
+            .append('div')
+            .style('background-color', 'rgba(100, 0, 0, 0.8)')
+            .style('color', '#fff')
+            .style('border-radius', '5px')
+            .style('position', 'absolute')
+            .style('class', 'tooltip')
+            .style('padding', '10px')
+            .style('opacity', 0)
+            .style('pointer-events', 'none')
+
         // circle
         svg.selectAll('mycircle')
             .data(flatData)
@@ -216,12 +225,12 @@ export class ScaffoldBarchartComponent implements OnInit {
             .style('opacity', 0)
             .attr('cursor', 'pointer') // Set the cursor to indicate it's clickable
             .on('mouseover', function (event, d: any) {
-                tooltip.transition().duration(200).style('opacity', 1)
-                tooltip
+                tooltip2.style('opacity', 1)
+                tooltip2
                     .html(
                         `Chr: ${d.chromosome} <br> BP: ${d.mutation.BP} <br> Degree: ${d.mutation.muValues}`
                     )
-                    .style('left', event.clientX + 70 + 'px')
+                    .style('left', event.clientX + 10 + 'px')
                     .style('top', event.clientY + 'px')
 
                 d3.select(this)
@@ -233,7 +242,7 @@ export class ScaffoldBarchartComponent implements OnInit {
                     })
             })
             .on('mouseout', function () {
-                tooltip.transition().duration(200).style('opacity', 0)
+                tooltip2.style('opacity', 0)
                 d3.select(this)
                     .transition()
                     .duration(200)
@@ -244,25 +253,20 @@ export class ScaffoldBarchartComponent implements OnInit {
             })
             .on('click', function (event, d: any) {
                 // Remove any existing images
-                d3.selectAll('image').remove()
+                // d3.selectAll('image').remove()
                 d3.selectAll('circle').attr('stroke', 'none').attr('stroke-width', '0px')
-                const bar = d3.select(`.bar-${d.chromosome}`)
+                const bar = d3.select(`.bar-${d.chromosome.replace(/[^a-zA-Z0-9]/g, '')}`)
                 d3.selectAll('rect').style('stroke', 'none')
-                bar.style('stroke-width', '2').style('stroke', '#5c677d')
+                bar.style('stroke-width', '4').style('stroke', '#5c677d')
 
                 // Add an image above the clicked bar
-                d3.select('svg')
-                    .append('image')
-                    .attr('xlink:href', '../../../../../assets/down2.png')
-                    .attr('width', 15 + 'px')
-                    .attr('height', 15 + 'px')
-                    .attr('x', (x(d.chromosome) || 0) + 86)
-                    .attr('y', y(d.length) - 1)
-
-                d3.select(this)
-                    .classed('selected', true)
-                    .attr('stroke', '#5c677d')
-                    .attr('stroke-width', '3px')
+                // d3.select('svg')
+                //     .append('image')
+                //     .attr('xlink:href', '../../../../../assets/down2.png')
+                //     .attr('width', 15 + 'px')
+                //     .attr('height', 15 + 'px')
+                //     .attr('x', (x(d.chromosome) || 0) + 87 )
+                //     .attr('y', y(d.length) - 1)
 
                 callEmit(10, 1000, d.chromosome)
                 d3.select('#chr_name').text(d.chromosome)

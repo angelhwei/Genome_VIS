@@ -8,8 +8,9 @@ export class GeneExpDataService {
     constructor() {}
 
     fetchGeneExpData() {
-        return fetch('../../assets/data/expression-data.csv')
+        return fetch('../../assets/data/exp_data_general_group.csv')
             .then(response => response.text())
             .then(data => d3.csvParse(data))
     }
 }
+

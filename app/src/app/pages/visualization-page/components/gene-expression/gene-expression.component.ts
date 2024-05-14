@@ -28,7 +28,7 @@ export class GeneExpressionComponent implements OnInit {
 
     clickedPin: MarkerProperties | null = null
     data: any
-    mutationData: any
+    geneData: any
     selected: { name: string; color: string | undefined }[] = []
     selectedLocation: string[] = []
     color = '#53b3bd'
@@ -59,15 +59,17 @@ export class GeneExpressionComponent implements OnInit {
             }
         })
         this.dataService.fetchData().then(data => {
-            this.mutationData = data.filter((d: any) => d.mutation.length > 0)
+            this.geneData = data
         })
     }
 
     geneHasMutation(geneHasMu: string[] = []) {
         // console.log('geneHasMutation: ')
         // console.log(geneHasMu)
-
-        d3.selectAll('.line').style('stroke-width', 1).style('opacity', 0.1)
+        d3.selectAll('.line')
+            .style('stroke-width', 1)
+            .style('opacity', 0.1)
+            .style('stroke', '#53b3bd')
         if (geneHasMu.length !== 0) {
             this.data.forEach((d: any) => {
                 let geneRename = 'ex-' + d.Gene.replace(/[^\w\s]|_/g, '').toLowerCase()
@@ -76,7 +78,7 @@ export class GeneExpressionComponent implements OnInit {
                         .style('stroke-width', 1)
                         .style('stroke', 'rgba(192,36,37,0.5)')
                         .style('opacity', 1)
-                        .raise()
+                    // .raise()
                 }
             })
         }
@@ -88,12 +90,10 @@ export class GeneExpressionComponent implements OnInit {
             return
         }
 
-        // d3.selectAll('.line').style('stroke-width', 1).style('opacity', 0.1)
         this.geneHasMutation(this.geneHasMu)
         let hasInExpression = this.data.some((el: any) => el['Gene'] === name)
 
         if (!hasInExpression) {
-            console.log('Gene not found in expression data')
             const existingTooltip = d3.select('#pc-container').select('.tooltip2')
 
             if (existingTooltip.empty()) {
@@ -106,16 +106,16 @@ export class GeneExpressionComponent implements OnInit {
                     .style('color', '#fff')
                     .style('border-radius', '5px')
                     .style('padding', '10px')
-                    .html('Below threshold!')
+                    .html('No differential expression')
                     .style('position', 'absolute')
-                    .style('top', '40%')
+                    .style('top', '10%')
                     .style('left', '50%')
                     .style('transform', 'translate(-50%, -50%)')
 
                 setTimeout(() => {
                     tooltip2.remove()
                     d3.select('#pc-container').style('position', 'static')
-                }, 1000)
+                }, 500)
             }
             return
         } else {
@@ -212,8 +212,8 @@ export class GeneExpressionComponent implements OnInit {
             btn.style.borderRadius = '28px'
             btn.style.border = `2px solid ${this.selected[i].color}`
             btn.style.padding = '5px'
-            btn.style.marginRight = '5px'
-            btn.style.marginBottom = '5px'
+            btn.style.marginRight = '6px'
+            btn.style.marginBottom = '6px'
             btn.style.cursor = 'pointer'
             btn.style.width = 'calc( 100%-20% )'
             btn.style.height = '30px'
@@ -239,18 +239,21 @@ export class GeneExpressionComponent implements OnInit {
                     }
                     this.style.color = 'white'
                     clicked = true
+                    self.selectedLocation.push(this.innerHTML)
                 } else {
                     let index = dimensions2.indexOf(this.innerHTML)
                     if (index !== -1) {
                         dimensions2.splice(index, 1)
+                        self.selectedLocation.splice(index, 1)
                     }
                     this.style.backgroundColor = 'transparent'
                     this.style.color = 'darkgrey'
                     clicked = false
                 }
-                dimensions2.map(location => {
-                    self.selectedLocation.push(location)
-                })
+                // dimensions2.map(location => {
+                //     self.selectedLocation.push(location)
+                // })
+
                 drawChart(dimensions2)
                 if (dimensions2.length !== 0) {
                     empty!.style.display = 'none'
@@ -278,6 +281,27 @@ export class GeneExpressionComponent implements OnInit {
         }
 
         function drawChart(dimensions: any) {
+            const tooltip2 = d3
+                .select('#pc-container')
+                .style('position', 'relative')
+                .append('div')
+                .attr('class', 'tooltip2')
+
+            if (dimensions.length === 1) {
+                tooltip2
+                    .style('background-color', '#5c677d')
+                    .style('color', '#fff')
+                    .style('border-radius', '5px')
+                    .style('padding', '10px')
+                    .html('Add another condition')
+                    .style('position', 'absolute')
+                    .style('top', '40%')
+                    .style('left', '50%')
+                    .style('transform', 'translate(-50%, -50%)')
+            } else {  
+                tooltip2.remove()
+                d3.select('#pc-container').style('position', 'static')
+            }
             svgContainer.selectAll('*').remove()
             let svg = d3
                 .select('#PC')
@@ -368,6 +392,14 @@ export class GeneExpressionComponent implements OnInit {
                 .style('opacity', 0.1)
                 .style('cursor', 'pointer')
                 .on('mouseover', function (event: any, d: any) {
+                    let chrName = ''
+                    self.geneData.forEach((chr: any) => {
+                        for (let i = 0; i < chr.gene.length; i++) {
+                            if (chr.gene[i].name == d.Gene) {
+                                chrName = chr.chromosome
+                            }
+                        }
+                    })
                     d3.select(this).style('stroke-width', 4).style('opacity', '1')
 
                     let tooltipWidth = 200 // Replace with your tooltip width
@@ -379,7 +411,9 @@ export class GeneExpressionComponent implements OnInit {
                     tooltip.style('opacity', 1)
                     tooltip
                         .html(
-                            `Gene: ${d.Gene}` +
+                            `Chr: ${chrName}` +
+                                `<br>` +
+                                `Gene: ${d.Gene}` +
                                 '<br>' +
                                 dimensions
                                     .map((dimension: string) => `${dimension}: ${d[dimension]}`)
@@ -388,9 +422,9 @@ export class GeneExpressionComponent implements OnInit {
                         .style('top', function () {
                             let pageY = event.pageY
                             if (containerRect && pageY + tooltipHeight > containerRect.bottom) {
-                                return containerRect.bottom - tooltipHeight + 'px' // If the tooltip would go off the bottom of the container, move it up
+                                return pageY - tooltipHeight + 'px' // Align the bottom of the tooltip with the mouse pointer
                             } else {
-                                return pageY - tooltipHeight + 'px'
+                                return pageY - tooltipHeight + 'px' // Align the bottom of the tooltip with the mouse pointer
                             }
                         })
                         .style('left', function () {
@@ -402,9 +436,17 @@ export class GeneExpressionComponent implements OnInit {
                             }
                         })
                 })
-                .on('mouseleave', function () {
+                .on('mouseleave', function (d: any) {
                     d3.selectAll('.line').style('opacity', '0.1').style('stroke-width', 1)
                     tooltip.style('opacity', 0)
+                    let geneHasMu = self.geneHasMu
+                    for (let d of geneHasMu) {
+                        let geneRename = 'ex-' + d.replace(/[^\w\s]|_/g, '').toLowerCase()
+                        d3.selectAll('.' + geneRename)
+                            .style('stroke-width', 1)
+                            .style('stroke', 'rgba(192,36,37,0.5)')
+                            .style('opacity', 1)
+                    }
                 })
 
             // Update the lines
@@ -476,6 +518,7 @@ export class GeneExpressionComponent implements OnInit {
                     // Redraw the paths with the sorted data
                     svg.selectAll('path').data(data).transition().duration(1000).attr('d', path)
 
+                    let self = this // Assign 'this' to 'self' outside the callback
                     // Update the axis
                     svg.selectAll('.axis').each(function (p) {
                         if (p == d) {
@@ -501,6 +544,8 @@ export class GeneExpressionComponent implements OnInit {
                         })
                     }
                 })
+
+            self.geneHasMutation(self.geneHasMu) // Use 'self' instead of 'this'
         }
     }
 }

@@ -1,13 +1,18 @@
 h4 {
     margin-bottom: 0.1rem;
     margin-top: 0.1rem;
-    font-size: 0.7rem;
+    font-size: 0.8vw;
     font-family: 'Quicksand', sans-serif;
 }
 
 #PC {
     padding: 10px;
     overflow-y: auto;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+#PC::-webkit-scrollbar {
+  display: none;
 }
 
 .map {
@@ -21,6 +26,17 @@ h4 {
     overflow-y: auto;
     width: 50%;
     margin-left: 1rem;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.filter::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+#PC, .filter  {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .filter-container {
@@ -55,10 +71,10 @@ h4 {
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
     line-height: 1.5;
     font-size: 1vw;
     font-weight:bold;
+    margin: 0.5rem;
 }
 
 #empty-pc-text {

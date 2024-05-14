@@ -12,7 +12,6 @@
     background-color: rgba(255, 255, 255, 1);
     border-radius: 28px;
 }
-.barchart-container,
 .sequence-container,
 .map-container {
     overflow-y: auto;
@@ -22,8 +21,8 @@
     display: grid;
     padding: 1%;
     grid:
-        'span9 span9 span9 span9 span9 span9 span9 span9 span3 span3 span3 span3' 3fr
-        'span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span3 span3 span3 span3' 8fr
+        'span9 span9 span9 span9 span9 span9 span9 span9 span3 span3 span3 span3' 4fr
+        'span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span9-2 span3 span3 span3 span3' 9fr
         / 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
     gap: 15px;
 }
@@ -48,9 +47,9 @@
 .title {
     position: sticky;
     top: 0;
-    width: 50%;
+    width: 60%;
     padding: 10px;
-    font-size: min(1.2vw, 2rem);
+    font-size: 1.2vw;
     color: #6c757d;
     margin: 0.5rem;
 }
@@ -79,6 +78,12 @@
 
 .sequence-container::-webkit-scrollbar {
     display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.sequence-container {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
 }
 
 // .barchart-container {

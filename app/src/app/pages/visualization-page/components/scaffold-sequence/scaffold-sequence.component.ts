@@ -15,7 +15,8 @@ import { ThemePalette } from '@angular/material/core'
 import { SequenceExpressionService } from '../../../../services/sequence-expression.service'
 import { merge } from 'rxjs'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
-
+import { MatSlideToggleModule } from '@angular/material/slide-toggle'
+import { MatCheckboxModule } from '@angular/material/checkbox'
 
 @Component({
     selector: 'app-scaffold-sequence',
@@ -31,6 +32,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
         FormsModule,
         ReactiveFormsModule,
         CommonModule,
+        MatSlideToggleModule,
+        MatCheckboxModule,
     ],
     templateUrl: './scaffold-sequence.component.html',
     styleUrl: './scaffold-sequence.component.scss',
@@ -38,8 +41,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 export class ScaffoldSequenceComponent {
     @Input() width!: number
     @Output() geneClicked = new EventEmitter<string>()
-
-    @ViewChild('content2') content2!: ElementRef;
+    @ViewChild('content2') content2!: ElementRef
 
     squareSize = new FormControl('', [Validators.required, Validators.min(1), Validators.max(30)])
     squareCompress = new FormControl('', [
@@ -54,6 +56,8 @@ export class ScaffoldSequenceComponent {
     compressionNum: number = 1000
     scaffold!: string
     data: any
+    geneHasMu: string[] = []
+    highlight = false
 
     constructor(
         private shareService: ShareService,
@@ -79,10 +83,25 @@ export class ScaffoldSequenceComponent {
         })
     }
 
+    showGeneHasMu(completed: boolean) {
+        let geneRename = ''
+        if (completed && this.geneHasMu.length > 0) {
+            this.geneHasMu.forEach((gene: string) => {
+                geneRename = 'seq-' + gene.replace(/[^\w\s]|_/g, '').toLowerCase()
+                d3.selectAll('.' + geneRename).style('fill', 'rgba(192,36,37,0.5)')
+            })
+            this.highlight = true
+        } else {
+            this.geneHasMu.forEach((gene: string) => {
+                // geneRename = 'seq-' + gene.replace(/[^\w\s]|_/g, '').toLowerCase()
+                d3.selectAll('.gene').style('fill', '#0fa3b1')
+            })
+            this.highlight = false
+        }
+    }
+
     updateErrorMessage() {
-        if (this.squareSize.hasError('required') || this.squareCompress.hasError('required')) {
-            this.errorMessage = 'You must enter a value'
-        } else if (
+        if (
             this.squareSize.hasError('min') ||
             this.squareSize.hasError('max') ||
             this.squareCompress.hasError('min') ||
@@ -90,8 +109,9 @@ export class ScaffoldSequenceComponent {
         ) {
             this.errorMessage = 'Not a valid number'
         } else {
-            this.errorMessage = ''
+            this.errorMessage = 'Wrong number'
         }
+        
     }
 
     handleClick() {
@@ -133,7 +153,7 @@ export class ScaffoldSequenceComponent {
         const tooltip = d3
             .select('#content2')
             .append('div')
-            .style('background-color', 'rgba(0, 0, 0, 0.8)')
+            .style('background-color', c)
             .style('color', '#fff')
             .style('border-radius', '5px')
             .style('position', 'absolute')
@@ -141,6 +161,7 @@ export class ScaffoldSequenceComponent {
             .style('padding', '10px')
             .style('opacity', 0)
             .style('pointer-events', 'none')
+            .style('z-index', '100')
 
         let tooltipWidth = 200 // Replace with your tooltip width
         let tooltipHeight = 80
@@ -150,7 +171,7 @@ export class ScaffoldSequenceComponent {
 
         circle
             .on('mouseover', (event: any) => {
-                tooltip.style('opacity', 1)
+                tooltip.style('opacity', 0.9)
                 tooltip
                     .html(details)
                     .style('top', function () {
@@ -170,7 +191,7 @@ export class ScaffoldSequenceComponent {
                         }
                     })
 
-                d3.select(event.target).style('stroke', '#c02425').style('stroke-width', '2px')
+                d3.select(event.target).style('stroke', 'red').style('stroke-width', '3px')
             })
             .on('mouseout', (event: any) => {
                 tooltip.style('opacity', 0)
@@ -207,6 +228,7 @@ export class ScaffoldSequenceComponent {
                 .attr('y', y + h)
                 .text(lastPosition)
                 .style('font-size', h)
+                .attr('cursor', 'default')
 
             const handleMouseOverOut = (event: any, size: number) => {
                 if (w <= 5) {
@@ -260,6 +282,7 @@ export class ScaffoldSequenceComponent {
                 .attr('y', y + h)
                 .text(lastPosition)
                 .style('font-size', h)
+                .attr('cursor', 'default')
                 .on('mouseover', (event: any) => handleMouseEvents(event, 10))
                 .on('mouseout', (event: any) => handleMouseEvents(event, h))
         }
@@ -284,14 +307,14 @@ export class ScaffoldSequenceComponent {
                 tooltip.style('left', event.pageX + 10 + 'px').style('top', event.pageY - 35 + 'px')
 
                 const seq = d3.selectAll('.' + geneRename)
-                seq.attr('fill', 'rgba(192,36,37,0.5)').style('opacity', 1)
+                seq.style('opacity', 1)
 
                 this.sequenceExpr.changeData(geneName)
                 // this.geneClicked.emit(geneName)
             })
             .on('mouseout', function () {
                 tooltip.style('opacity', 0)
-                d3.selectAll('.gene').attr('fill', c).style('opacity', 0.6)
+                d3.selectAll('.gene').style('opacity', 0.6)
             })
     }
 
@@ -357,21 +380,19 @@ export class ScaffoldSequenceComponent {
                 geneEnd: number = 0,
                 overlap: number = 0
             ) => {
-                console.log('overlap:', overlap)
                 let squareNum = Math.ceil((end - start) / compressionNum)
                 let squareRemain = Math.floor((end - start) % compressionNum) - overlap
-                // if ((squareNum === 0 && squareRemain > 0) || squareRemain > 0) squareNum += 1
                 let last = false
 
                 // error checking
-                if (squareRemain < 0) {
-                    console.log('SquareRemain:' + squareRemain)
-                    console.log('SquareNum:' + squareNum)
-                    console.log('Start:' + start)
-                    console.log('End:' + end)
-                    console.log('GeneName:' + geneName)
-                    console.log('lastPosistion:' + lastPosition)
-                }
+                // if (squareRemain < 0) {
+                //     console.log('SquareRemain:' + squareRemain)
+                //     console.log('SquareNum:' + squareNum)
+                //     console.log('Start:' + start)
+                //     console.log('End:' + end)
+                //     console.log('GeneName:' + geneName)
+                //     console.log('lastPosistion:' + lastPosition)
+                // }
 
                 for (let k = 0; k < squareNum; k++) {
                     k == squareNum - 1 && squareRemain
@@ -522,52 +543,65 @@ export class ScaffoldSequenceComponent {
                 let muInLastGene = false
                 let mutations = data[i].mutation
                 let geneHasMutation = [] as any
-                let preEnd = 0
+                let preEnd = 0 // if overlapping happened before N previous gene
+                let currentX = 0 // recorded current X position if have overlapping
+                let currentY = 0 // recorded current Y position if have overlapping
 
                 // Enter selected scaffold
                 for (let g = 0; g < data[i].gene.length; g++) {
                     let gene = data[i].gene[g]
                     let previousPoint = g === 0 ? 0 : data[i].gene[g - 1].end
                     if (preEnd) {
-                        previousPoint = preEnd
+                        // console.log('gene.start:', gene.start)
+                        // console.log('preEnd:', preEnd)
+                        if (preEnd < gene.start) {
+                            previousPoint = preEnd
+                            X = currentX
+                            Y = currentY
+                            currentX = 0
+                            currentY = 0
+                        }
                         preEnd = 0
                     }
                     let hasMutation = false
                     let overlapping = 0
+                    const overlappingCal = () => {
+                        let previousG = 0
+                        while (
+                            g - previousG > 0 &&
+                            data[i].gene[g - (previousG + 1)].end > gene.start
+                        ) {
+                            previousG++
+                        }
+                        previousPoint = data[i].gene[g - previousG].end
+                        if (previousPoint > gene.end) {
+                            overlapping = gene.end - gene.start
+                            preEnd = previousPoint
+                        } else overlapping = previousPoint - gene.start
+
+                        currentX = X
+                        currentY = Y
+                        X -= Math.ceil((previousPoint - gene.start) / compressionNum) * squareWidth
+                        while (X < 0) {
+                            X = width
+                            Y -= yAdd
+                        }
+
+                        geneCompress(
+                            gene.start,
+                            gene.end,
+                            true,
+                            gene.name,
+                            gene.start,
+                            gene.end,
+                            overlapping
+                        )
+                    }
 
                     // No mutation in the scaffold
                     if (mutations.length === 0) {
                         if (previousPoint > gene.start) {
-                            let previousG = 0
-                            while (
-                                g - previousG > 0 &&
-                                data[i].gene[g - (previousG + 1)].end > gene.start
-                            ) {
-                                previousG++
-                            }
-                            previousPoint = data[i].gene[g - previousG].end
-                            if (previousPoint > gene.end) {
-                                overlapping = gene.end - gene.start
-                                preEnd = previousPoint
-                            } else overlapping = previousPoint - gene.start
-
-                            X -=
-                                Math.ceil((previousPoint - gene.start) / compressionNum) *
-                                squareWidth
-                            while (X < 0) {
-                                X = width
-                                Y -= yAdd
-                            }
-
-                            geneCompress(
-                                gene.start,
-                                gene.end,
-                                true,
-                                gene.name,
-                                gene.start,
-                                gene.end,
-                                overlapping
-                            )
+                            overlappingCal()
                         } else {
                             geneCompress(previousPoint, gene.start, false)
                             if (gene.end === data[i].length) {
@@ -616,26 +650,7 @@ export class ScaffoldSequenceComponent {
                         if (mutations[m].BP >= start && mutations[m].BP <= gene.end) {
                             // current gene start is smaller than previous point
                             if (previousPoint > start) {
-                                let previousG = 0
-                                while (
-                                    g - previousG > 0 &&
-                                    data[i].gene[g - (previousG + 1)].end > gene.start
-                                ) {
-                                    previousG++
-                                }
-                                previousPoint = data[i].gene[g - previousG].end
-                                if (previousPoint > gene.end) {
-                                    overlapping = gene.end - gene.start
-                                    preEnd = previousPoint
-                                } else overlapping = previousPoint - gene.start
-
-                                X -=
-                                    Math.ceil((previousPoint - gene.start) / compressionNum) *
-                                    squareWidth
-                                while (X < 0) {
-                                    X = width
-                                    Y -= yAdd
-                                }
+                                overlappingCal()
                             } else if (!hasMutation) {
                                 geneCompress(previousPoint, start, false)
                             }
@@ -643,13 +658,6 @@ export class ScaffoldSequenceComponent {
                             // Mutation is at the start point
                             if (mutations[m].BP === start) {
                                 drawMutation(mutations[m])
-
-                                while (m + 1 < mutations.length && mutations[m + 1].BP === start) {
-                                    m++
-                                    drawMutation(mutations[m])
-                                    // mChange = true
-                                    // mChangeTime++
-                                }
                             }
 
                             // Mutation is among the gene start and end
@@ -695,14 +703,6 @@ export class ScaffoldSequenceComponent {
                             // Mutation is at the end point
                             if (mutations[m].BP === gene.end) {
                                 drawMutation(mutations[m])
-                                // multiMutation()
-                                while (
-                                    m + 1 < mutations.length &&
-                                    mutations[m + 1].BP === gene.end
-                                ) {
-                                    m++
-                                    drawMutation(mutations[m])
-                                }
                             }
 
                             hasMutation = true
@@ -730,36 +730,7 @@ export class ScaffoldSequenceComponent {
                     // Current gene do not have mutation
                     if (!hasMutation) {
                         if (previousPoint > gene.start) {
-                            let previousG = 0
-                            while (
-                                g - previousG > 0 &&
-                                data[i].gene[g - (previousG + 1)].end > gene.start
-                            ) {
-                                previousG++
-                            }
-                            previousPoint = data[i].gene[g - previousG].end
-                            if (previousPoint > gene.end) {
-                                overlapping = gene.end - gene.start
-                                preEnd = previousPoint
-                            } else overlapping = previousPoint - gene.start
-
-                            X -=
-                                Math.ceil((previousPoint - gene.start) / compressionNum) *
-                                squareWidth
-                            while (X < 0) {
-                                X = width
-                                Y -= yAdd
-                            }
-
-                            geneCompress(
-                                gene.start,
-                                gene.end,
-                                true,
-                                gene.name,
-                                gene.start,
-                                gene.end,
-                                overlapping
-                            )
+                            overlappingCal()
                         } else {
                             geneCompress(previousPoint, gene.start, false)
                             if (gene.end === data[i].length) {
@@ -785,7 +756,9 @@ export class ScaffoldSequenceComponent {
                     }
                 }
                 this.sequenceExpr.geneHasMu(geneHasMutation)
+                this.geneHasMu = geneHasMutation
             }
+            if (this.highlight) this.showGeneHasMu(true)
         })
     }
 }

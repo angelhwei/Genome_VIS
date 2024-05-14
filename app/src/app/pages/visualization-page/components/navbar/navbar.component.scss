@@ -1,11 +1,14 @@
 nav {
     height: 5vh;
+    width: 100%;
+    display: flex;
+    justify-content:space-between;
     // border-bottom-left-radius: 1rem;
     // border-bottom-right-radius: 1rem;
     // background-color: #53b3bd;
 }
 nav div {
-    font-size: min(1rem, 2vw);
+    font-size: 2vw;
     font-weight: 800;
     color: #fff;
     letter-spacing: 1px;
@@ -17,5 +20,23 @@ nav div {
     gap: 0.5rem;
 }
 img {
-    width: calc(1.5rem + 0.3vw);
+    width: calc(1.5rem + 0.5vw);
+}
+nav div:nth-child(2) {
+    justify-content: flex-end;
+    gap: 0.5rem;
+    width: 10%;
+}
+svg{
+    background-color: #5c677d;
+    fill: #fff;
+    border: none;
+    border-radius: 50%;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+svg:hover {
+    background-color: #fff;
+    fill: #5c677d;
 }

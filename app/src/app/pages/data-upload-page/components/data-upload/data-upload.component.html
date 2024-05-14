@@ -3,4 +3,27 @@
     <input type="file" id="file-input" multiple accept=".txt" />
     <button type="submit">Merge and Download</button>
   </form>
+  <table>
+    <thead>
+      <tr>
+        <th>File Name</th>
+        <th>File Size</th>
+        <th>File Type</th>
+        <th>File Last Modified</th>
+        <th>File Content</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let file of files">
+        <td>{{ file.name }}</td>
+        <td>{{ file.size }}</td>
+        <td>{{ file.type }}</td>
+        <td>{{ file.lastModified }}</td>
+        <td>
+          <button (click)="downloadFile(file)">Download</button>
+          <button (click)="removeFile(file)">Remove</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

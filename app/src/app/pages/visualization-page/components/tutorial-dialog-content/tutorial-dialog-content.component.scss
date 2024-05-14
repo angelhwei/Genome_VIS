@@ -1,0 +1,26 @@
+.view-img img{
+  width: 40vw;
+}
+.view-img, #expression{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+}
+#expression img{
+  height: 50vh;
+}
+.view-legend{
+  width: 1rem;
+  margin-right: 0.2rem;
+}
+strong{
+  font-weight: 1200;
+}
+ul{
+  padding-left: 30px;
+}
+h3{
+  margin-top: 2rem;
+}
