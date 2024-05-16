@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, NgModule } from '@angular/core'
+import { Component, OnInit, Input, NgModule, Output, EventEmitter } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { MapComponent } from '../map/map.component'
 import { GeneExpDataService } from '../../../../services/gene-exp-data.service'
@@ -25,6 +25,7 @@ export class GeneExpressionComponent implements OnInit {
     @Input() height!: number
     @Input() pinClicked!: MarkerProperties
     @Input() geneDetails!: string
+    @Output() pcAxisNum = new EventEmitter<number>()
 
     clickedPin: MarkerProperties | null = null
     data: any
@@ -97,25 +98,24 @@ export class GeneExpressionComponent implements OnInit {
             const existingTooltip = d3.select('#pc-container').select('.tooltip2')
 
             if (existingTooltip.empty()) {
-                const tooltip2 = d3
-                    .select('#pc-container')
-                    .style('position', 'relative')
-                    .append('div')
-                    .attr('class', 'tooltip2')
-                    .style('background-color', 'rgba(192,36,37,0.8)')
-                    .style('color', '#fff')
-                    .style('border-radius', '5px')
-                    .style('padding', '10px')
-                    .html('No differential expression')
-                    .style('position', 'absolute')
-                    .style('top', '10%')
-                    .style('left', '50%')
-                    .style('transform', 'translate(-50%, -50%)')
-
-                setTimeout(() => {
-                    tooltip2.remove()
-                    d3.select('#pc-container').style('position', 'static')
-                }, 500)
+                // const tooltip2 = d3
+                //     .select('#pc-container')
+                //     .style('position', 'relative')
+                //     .append('div')
+                //     .attr('class', 'tooltip2')
+                //     .style('background-color', 'rgba(192,36,37,0.8)')
+                //     .style('color', '#fff')
+                //     .style('border-radius', '5px')
+                //     .style('padding', '10px')
+                //     .html('No differential expression')
+                //     .style('position', 'absolute')
+                //     .style('top', '10%')
+                //     .style('left', '50%')
+                //     .style('transform', 'translate(-50%, -50%)')
+                // setTimeout(() => {
+                //     tooltip2.remove()
+                //     d3.select('#pc-container').style('position', 'static')
+                // }, 500)
             }
             return
         } else {
@@ -255,6 +255,8 @@ export class GeneExpressionComponent implements OnInit {
                 // })
 
                 drawChart(dimensions2)
+                self.pcAxisNum.emit(self.selectedLocation.length)
+
                 if (dimensions2.length !== 0) {
                     empty!.style.display = 'none'
                 } else {
@@ -281,25 +283,24 @@ export class GeneExpressionComponent implements OnInit {
         }
 
         function drawChart(dimensions: any) {
-            const tooltip2 = d3
-                .select('#pc-container')
-                .style('position', 'relative')
-                .append('div')
-                .attr('class', 'tooltip2')
-
             if (dimensions.length === 1) {
-                tooltip2
+                const axisWarningTooltip = d3
+                    .select('#pc-container')
+                    .style('position', 'relative')
+                    .append('div')
+                    .attr('class', 'axisWarningTooltip')
                     .style('background-color', '#5c677d')
                     .style('color', '#fff')
                     .style('border-radius', '5px')
                     .style('padding', '10px')
                     .html('Add another condition')
+                    .style('opacity', 1)
                     .style('position', 'absolute')
                     .style('top', '40%')
                     .style('left', '50%')
                     .style('transform', 'translate(-50%, -50%)')
-            } else {  
-                tooltip2.remove()
+            } else {
+                d3.selectAll('.axisWarningTooltip').style('opacity', 0)
                 d3.select('#pc-container').style('position', 'static')
             }
             svgContainer.selectAll('*').remove()

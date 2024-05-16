@@ -44,9 +44,14 @@ export class HomepageComponent implements AfterViewInit {
     @ViewChild('svgComponent3') svgComponent3!: GeneExpressionComponent
     @ViewChild('container2') container2!: ElementRef
     selectedGene = ''
+    pcNum = 0
 
     handleGeneClicked(details: string) {
         this.selectedGene = details
+    }
+
+    handlePCNumChanged(num: number) {
+        this.pcNum = num
     }
 
     ngAfterViewInit() {

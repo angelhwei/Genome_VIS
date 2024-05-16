@@ -13,13 +13,13 @@
     </div>
 
     <div class="sequence-container span9-2">
-        <app-scaffold-sequence #svgComponent2 (geneClicked)="handleGeneClicked($event)"></app-scaffold-sequence>
+        <app-scaffold-sequence #svgComponent2 (geneClicked)="handleGeneClicked($event)" [pcAxisNum]="pcNum"></app-scaffold-sequence>
     </div>
 
     <div class="gene-exp-container span3" #container2>
         <div class="title">Gene Expression View</div>
         <div class="pc">
-            <app-gene-expression #svgComponent3 [geneDetails]="selectedGene"></app-gene-expression>
+            <app-gene-expression #svgComponent3 [geneDetails]="selectedGene" (pcAxisNum)="handlePCNumChanged($event)"></app-gene-expression>
         </div>
     </div>
 </div>

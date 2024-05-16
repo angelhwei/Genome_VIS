@@ -17,6 +17,7 @@ import { merge } from 'rxjs'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 import { MatCheckboxModule } from '@angular/material/checkbox'
+import { GeneExpDataService } from '../../../../services/gene-exp-data.service'
 
 @Component({
     selector: 'app-scaffold-sequence',
@@ -40,6 +41,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox'
 })
 export class ScaffoldSequenceComponent {
     @Input() width!: number
+    @Input() pcAxisNum!: number
     @Output() geneClicked = new EventEmitter<string>()
     @ViewChild('content2') content2!: ElementRef
 
@@ -50,19 +52,22 @@ export class ScaffoldSequenceComponent {
         Validators.max(10000),
     ])
 
+    data: any
     errorMessage = ''
     colorControl = new FormControl('warn' as ThemePalette)
     squareWidth: number = 10
     compressionNum: number = 1000
     scaffold!: string
-    data: any
     geneHasMu: string[] = []
     highlight = false
+    expGeneData: string[] = []
+    geneInExpData: string[] = []
 
     constructor(
         private shareService: ShareService,
         private dataService: DataService,
-        private sequenceExpr: SequenceExpressionService
+        private sequenceExpr: SequenceExpressionService,
+        private geneExpDataService: GeneExpDataService
     ) {
         merge(
             this.squareSize.statusChanges,
@@ -81,6 +86,18 @@ export class ScaffoldSequenceComponent {
                 this.handleData()
             }
         })
+        this.geneExpDataService.fetchGeneExpData().then(data => {
+            this.expGeneData = data.map((d: any) => d.Gene)
+        })
+    }
+
+    geneInExp(genes: any) {
+        for (let d of genes.gene) {
+            if (this.expGeneData.includes(d.name)) {
+                this.geneInExpData.push(d.name)
+            }
+        }
+        console.log(this.geneInExpData)
     }
 
     showGeneHasMu(completed: boolean) {
@@ -111,7 +128,6 @@ export class ScaffoldSequenceComponent {
         } else {
             this.errorMessage = 'Wrong number'
         }
-        
     }
 
     handleClick() {
@@ -221,23 +237,19 @@ export class ScaffoldSequenceComponent {
         rectangle.lower()
 
         if (last) {
-            const fontSize = w <= 5 ? 10 : w
-            const textElement = svg
-                .append('text')
-                .attr('x', x + w * 1.5)
-                .attr('y', y + h)
-                .text(lastPosition)
-                .style('font-size', h)
-                .attr('cursor', 'default')
-
             const handleMouseOverOut = (event: any, size: number) => {
                 if (w <= 5) {
                     d3.select(event.target).style('font-size', size)
                 }
             }
 
-            textElement
-                .on('mouseover', (event: any) => handleMouseOverOut(event, fontSize))
+            svg.append('text')
+                .attr('x', x + w + 5)
+                .attr('y', y + h)
+                .text(Math.floor(lastPosition))
+                .style('font-size', h)
+                .attr('cursor', 'default')
+                .on('mouseover', (event: any) => handleMouseOverOut(event, 10))
                 .on('mouseout', (event: any) => handleMouseOverOut(event, h))
         }
     }
@@ -278,9 +290,9 @@ export class ScaffoldSequenceComponent {
             }
 
             svg.append('text')
-                .attr('x', x + w * 1.5)
+                .attr('x', x + w + 5)
                 .attr('y', y + h)
-                .text(lastPosition)
+                .text(Math.floor(lastPosition))
                 .style('font-size', h)
                 .attr('cursor', 'default')
                 .on('mouseover', (event: any) => handleMouseEvents(event, 10))
@@ -309,20 +321,44 @@ export class ScaffoldSequenceComponent {
                 const seq = d3.selectAll('.' + geneRename)
                 seq.style('opacity', 1)
 
+                if (this.pcAxisNum > 1) {
+                    if (!this.geneInExpData.includes(geneName)) {
+                        const geneInExptooltip = d3
+                            .select('#pc-container')
+                            .style('position', 'relative')
+                            .append('div')
+                            .attr('class', 'geneInExptooltip')
+                            .style('background-color', 'rgba(192,36,37,0.8)')
+                            .style('color', '#fff')
+                            .style('border-radius', '5px')
+                            .style('padding', '10px')
+                            .html('No differential expression')
+                            .style('position', 'absolute')
+                            .style('opacity', 1)
+                            .style('top', '10%')
+                            .style('left', '50%')
+                            .style('transform', 'translate(-50%, -50%)')
+                    }
+                }
                 this.sequenceExpr.changeData(geneName)
                 // this.geneClicked.emit(geneName)
             })
-            .on('mouseout', function () {
+            .on('mouseout', (event: any) => {
                 tooltip.style('opacity', 0)
                 d3.selectAll('.gene').style('opacity', 0.6)
+                if (this.pcAxisNum > 1) {
+                    d3.selectAll('.geneInExptooltip').style('opacity', 0)
+                    d3.select('#pc-container').style('position', 'static')
+                }
             })
     }
 
     handleData() {
         this.dataService.fetchData().then(data => {
+            data = data.filter((d: any) => d.chromosome == this.scaffold)[0]
+            this.geneInExp(data)
             let squareWidth = this.squareWidth
             let compressionNum = this.compressionNum
-            let scaffold = this.scaffold
             let squareHeight = squareWidth
             let margin = { top: 20, right: 30, bottom: 60, left: 90 }
             let width = this.width
@@ -336,7 +372,7 @@ export class ScaffoldSequenceComponent {
             let Y = squareWidth + 10
             let yAdd = squareWidth * 2
 
-            // colors
+            // square color
             let genomeColorL1 = '#0fa3b1'
             let variantColor = d3
                 .scaleLinear()
@@ -384,37 +420,77 @@ export class ScaffoldSequenceComponent {
                 let squareRemain = Math.floor((end - start) % compressionNum) - overlap
                 let last = false
 
-                // error checking
-                // if (squareRemain < 0) {
-                //     console.log('SquareRemain:' + squareRemain)
-                //     console.log('SquareNum:' + squareNum)
-                //     console.log('Start:' + start)
-                //     console.log('End:' + end)
-                //     console.log('GeneName:' + geneName)
-                //     console.log('lastPosistion:' + lastPosition)
+                // // error checking
+                // // if (squareRemain < 0) {
+                // //     console.log('SquareRemain:' + squareRemain)
+                // //     console.log('SquareNum:' + squareNum)
+                // //     console.log('Start:' + start)
+                // //     console.log('End:' + end)
+                // //     console.log('GeneName:' + geneName)
+                // //     console.log('lastPosistion:' + lastPosition)
+                // // }
+
+                // for (let k = 0; k < squareNum; k++) {
+                //     k == squareNum - 1 && squareRemain
+                //         ? (lastPosition += squareRemain)
+                //         : (lastPosition += compressionNum)
+
+                //     // If the last square, set last to true
+                //     ;(X + squareWidth <= width && X + squareWidth * 2 > width) ||
+                //     (endSquare && k === squareNum - 1)
+                //         ? (last = true)
+                //         : (last = false)
+
+                //     if (X + squareWidth > width) (Y += yAdd), (X = 0)
+
+                //     isGene
+                //         ? this.drawGeneRectangle(
+                //               svg,
+                //               X,
+                //               Y,
+                //               squareWidth,
+                //               squareHeight,
+                //               genomeColorL1,
+                //               `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
+                //               last,
+                //               lastPosition,
+                //               geneName
+                //           )
+                //         : this.drawRectangle(
+                //               svg,
+                //               X,
+                //               Y,
+                //               squareWidth,
+                //               squareHeight,
+                //               comColor,
+                //               last,
+                //               lastPosition
+                //           )
+
+                //     X += squareWidth
                 // }
+                // svg.attr('height', squareWidth < 5 ? Y + margin.top : Y + squareWidth + margin.top)
 
-                for (let k = 0; k < squareNum; k++) {
-                    k == squareNum - 1 && squareRemain
-                        ? (lastPosition += squareRemain)
-                        : (lastPosition += compressionNum)
+                let sequenceWidth = squareNum * squareWidth // Current sequence width
+                svg.attr(
+                    'height',
+                    squareWidth < 5 ? Y + margin.top : Y + squareWidth ** 2 + margin.top
+                )
 
-                    // If the last square, set last to true
-                    ;(X + squareWidth <= width && X + squareWidth * 2 > width) ||
-                    (endSquare && k === squareNum - 1)
-                        ? (last = true)
-                        : (last = false)
+                // NOTE: Optimized code
 
-                    if (X + squareWidth > width) (Y += yAdd), (X = 0)
-
-                    svg.attr('height', squareWidth < 5 ? Y + 10 : Y + squareWidth + 10)
+                if (X + sequenceWidth < width) {
+                    endSquare ? (last = true) : (last = false)
+                    squareRemain
+                        ? (lastPosition += (squareNum - 1) * compressionNum + squareRemain)
+                        : (lastPosition += squareNum * compressionNum)
 
                     isGene
                         ? this.drawGeneRectangle(
                               svg,
                               X,
                               Y,
-                              squareWidth,
+                              sequenceWidth,
                               squareHeight,
                               genomeColorL1,
                               `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
@@ -426,244 +502,208 @@ export class ScaffoldSequenceComponent {
                               svg,
                               X,
                               Y,
-                              squareWidth,
+                              sequenceWidth,
+                              squareHeight,
+                              comColor,
+                              last,
+                              lastPosition
+                          )
+                    X += sequenceWidth
+                    return
+                }
+                while (X + sequenceWidth > width) {
+                    lastPosition += ((width - X) / squareWidth) * compressionNum
+                    last = true
+                    isGene
+                        ? this.drawGeneRectangle(
+                              svg,
+                              X,
+                              Y,
+                              width - X,
+                              squareHeight,
+                              genomeColorL1,
+                              `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
+                              last,
+                              lastPosition,
+                              geneName
+                          )
+                        : this.drawRectangle(
+                              svg,
+                              X,
+                              Y,
+                              width - X,
                               squareHeight,
                               comColor,
                               last,
                               lastPosition
                           )
 
-                    X += squareWidth
-                    last = false
+                    sequenceWidth = sequenceWidth - (width - X)
+                    X = 0
+                    Y += yAdd
                 }
+                if (sequenceWidth > 0) {
+                    X + sequenceWidth == width || endSquare ? (last = true) : (last = false)
+                    squareRemain
+                        ? (lastPosition +=
+                              (sequenceWidth / squareWidth - 1) * compressionNum + squareRemain)
+                        : (lastPosition += (sequenceWidth / squareWidth) * compressionNum)
 
-                // let sequenceWidth = squareNum * squareWidth
-                // svg.attr('height', squareWidth < 5 ? Y + 10 : Y + squareWidth + 10)
-                // if (X + sequenceWidth + squareWidth < width) {
-                //     endSquare ? (last = true) : (last = false)
-                //     squareRemain
-                //         ? (lastPosition += (squareNum - 1) * compressionNum + squareRemain)
-                //         : (lastPosition += squareNum * compressionNum)
-
-                //     isGene
-                //         ? this.drawGeneRectangle(
-                //               svg,
-                //               X,
-                //               Y,
-                //               sequenceWidth,
-                //               squareHeight,
-                //               genomeColorL1,
-                //               `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
-                //               last,
-                //               lastPosition,
-                //               geneName
-                //           )
-                //         : this.drawRectangle(
-                //               svg,
-                //               X,
-                //               Y,
-                //               sequenceWidth,
-                //               squareHeight,
-                //               comColor,
-                //               last,
-                //               lastPosition
-                //           )
-                //     X += sequenceWidth
-                // }
-                // while (X + sequenceWidth + squareWidth > width) {
-                //     lastPosition += ((width - X) / squareWidth) * compressionNum
-                //     last = true
-                //     isGene
-                //         ? this.drawGeneRectangle(
-                //               svg,
-                //               X,
-                //               Y,
-                //               width - X,
-                //               squareHeight,
-                //               genomeColorL1,
-                //               `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
-                //               last,
-                //               lastPosition,
-                //               geneName
-                //           )
-                //         : this.drawRectangle(
-                //               svg,
-                //               X,
-                //               Y,
-                //               width - X,
-                //               squareHeight,
-                //               comColor,
-                //               last,
-                //               lastPosition
-                //           )
-                //     X = 0
-                //     Y += yAdd
-                //     sequenceWidth -= width - X
-                // }
-                // if (sequenceWidth > 0) {
-                //     X + sequenceWidth + sequenceWidth == width || endSquare
-                //         ? (last = true)
-                //         : (last = false)
-                //     squareRemain
-                //         ? (lastPosition +=
-                //               (sequenceWidth / squareWidth - 1) * compressionNum + squareRemain)
-                //         : (lastPosition += (sequenceWidth / squareWidth) * compressionNum)
-
-                //     isGene
-                //         ? this.drawGeneRectangle(
-                //               svg,
-                //               X,
-                //               Y,
-                //               sequenceWidth,
-                //               squareHeight,
-                //               genomeColorL1,
-                //               `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
-                //               last,
-                //               lastPosition,
-                //               geneName
-                //           )
-                //         : this.drawRectangle(
-                //               svg,
-                //               X,
-                //               Y,
-                //               sequenceWidth,
-                //               squareHeight,
-                //               comColor,
-                //               last,
-                //               lastPosition
-                //           )
-                //     X += sequenceWidth
-                // }
+                    isGene
+                        ? this.drawGeneRectangle(
+                              svg,
+                              X,
+                              Y,
+                              sequenceWidth,
+                              squareHeight,
+                              genomeColorL1,
+                              `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
+                              last,
+                              lastPosition,
+                              geneName
+                          )
+                        : this.drawRectangle(
+                              svg,
+                              X,
+                              Y,
+                              sequenceWidth,
+                              squareHeight,
+                              comColor,
+                              last,
+                              lastPosition
+                          )
+                    X += sequenceWidth
+                }
             }
 
-            for (let i = 0; i < data.length; i++) {
-                if (data[i].chromosome !== scaffold) continue
+            let lastGene = data.gene.length - 1
+            let muInLastGene = false
+            let mutations = data.mutation
+            let geneHasMutation = [] as any
+            let preEnd = 0 // if overlapping happened before N previous gene
+            let currentX = 0 // recorded current X position if have overlapping
+            let currentY = 0 // recorded current Y position if have overlapping
 
-                let lastGene = data[i].gene.length - 1
-                let muInLastGene = false
-                let mutations = data[i].mutation
-                let geneHasMutation = [] as any
-                let preEnd = 0 // if overlapping happened before N previous gene
-                let currentX = 0 // recorded current X position if have overlapping
-                let currentY = 0 // recorded current Y position if have overlapping
-
-                // Enter selected scaffold
-                for (let g = 0; g < data[i].gene.length; g++) {
-                    let gene = data[i].gene[g]
-                    let previousPoint = g === 0 ? 0 : data[i].gene[g - 1].end
-                    if (preEnd) {
-                        // console.log('gene.start:', gene.start)
-                        // console.log('preEnd:', preEnd)
-                        if (preEnd < gene.start) {
-                            previousPoint = preEnd
-                            X = currentX
-                            Y = currentY
-                            currentX = 0
-                            currentY = 0
-                        }
-                        preEnd = 0
+            // Enter selected scaffold
+            data.gene.forEach((gene: any, g: any) => {
+                let previousPoint = g === 0 ? 0 : data.gene[g - 1].end
+                if (preEnd) {
+                    if (preEnd < gene.start) {
+                        previousPoint = preEnd
+                        X = currentX
+                        Y = currentY
+                        currentX = 0
+                        currentY = 0
                     }
-                    let hasMutation = false
-                    let overlapping = 0
-                    const overlappingCal = () => {
-                        let previousG = 0
-                        while (
-                            g - previousG > 0 &&
-                            data[i].gene[g - (previousG + 1)].end > gene.start
+                    preEnd = 0
+                }
+                let hasMutation = false
+                let overlapping = 0
+                const overlappingCal = () => {
+                    let previousG = 0
+                    while (g - previousG > 0 && data.gene[g - (previousG + 1)].end > gene.start) {
+                        previousG++
+                    }
+                    previousPoint = data.gene[g - previousG].end
+                    if (previousPoint > gene.end) {
+                        overlapping = gene.end - gene.start
+                        preEnd = previousPoint
+                    } else overlapping = previousPoint - gene.start
+
+                    currentX = X
+                    currentY = Y
+                    X -= Math.ceil((previousPoint - gene.start) / compressionNum) * squareWidth
+                    while (X < 0) {
+                        X = width
+                        Y -= yAdd
+                    }
+
+                    geneCompress(
+                        gene.start,
+                        gene.end,
+                        true,
+                        gene.name,
+                        gene.start,
+                        gene.end,
+                        overlapping
+                    )
+                }
+
+                // No mutation in the scaffold
+                if (mutations.length === 0) {
+                    if (previousPoint > gene.start) {
+                        overlappingCal()
+                    } else {
+                        geneCompress(previousPoint, gene.start, false)
+                        if (gene.end === data.length) {
+                            endSquare = true
+                        }
+                        geneCompress(gene.start, gene.end, true, gene.name, gene.start, gene.end)
+                    }
+                    return
+                }
+
+                // Mutation in the scaffold
+                for (let m = 0; m < mutations.length; m++) {
+                    let start = gene.start
+
+                    // Among previous gene end and current gene start
+                    if (mutations[m].BP > previousPoint && mutations[m].BP < start) {
+                        geneCompress(previousPoint, mutations[m].BP, false)
+                        drawMutation(mutations[m])
+
+                        while (m + 1 < mutations.length && mutations[m + 1].BP < start) {
+                            m++
+                            geneCompress(mutations[m - 1].BP, mutations[m].BP, false)
+                            drawMutation(mutations[m])
+                        }
+
+                        geneCompress(mutations[m].BP, start, false)
+                        hasMutation = true
+
+                        // If next mutation is not in the current gene or no more mutation
+                        if (
+                            (m + 1 < mutations.length && mutations[m + 1].BP > gene.end) ||
+                            m + 1 >= mutations.length
                         ) {
-                            previousG++
+                            geneCompress(start, gene.end, true, gene.name, gene.start, gene.end)
                         }
-                        previousPoint = data[i].gene[g - previousG].end
-                        if (previousPoint > gene.end) {
-                            overlapping = gene.end - gene.start
-                            preEnd = previousPoint
-                        } else overlapping = previousPoint - gene.start
-
-                        currentX = X
-                        currentY = Y
-                        X -= Math.ceil((previousPoint - gene.start) / compressionNum) * squareWidth
-                        while (X < 0) {
-                            X = width
-                            Y -= yAdd
-                        }
-
-                        geneCompress(
-                            gene.start,
-                            gene.end,
-                            true,
-                            gene.name,
-                            gene.start,
-                            gene.end,
-                            overlapping
-                        )
                     }
 
-                    // No mutation in the scaffold
-                    if (mutations.length === 0) {
-                        if (previousPoint > gene.start) {
+                    // Among current gene start and end
+                    if (mutations[m].BP >= start && mutations[m].BP <= gene.end) {
+                        // current gene start is smaller than previous point
+                        if (previousPoint > start) {
                             overlappingCal()
-                        } else {
-                            geneCompress(previousPoint, gene.start, false)
-                            if (gene.end === data[i].length) {
-                                endSquare = true
-                            }
+                        } else if (!hasMutation) {
+                            geneCompress(previousPoint, start, false)
+                        }
+
+                        // Mutation is at the start point
+                        if (mutations[m].BP === start) {
+                            drawMutation(mutations[m])
+                        }
+
+                        // Mutation is among the gene start and end
+                        if (mutations[m].BP > start && mutations[m].BP < gene.end) {
                             geneCompress(
-                                gene.start,
-                                gene.end,
+                                start,
+                                mutations[m].BP,
                                 true,
                                 gene.name,
                                 gene.start,
                                 gene.end
                             )
-                        }
-                        continue
-                    }
-
-                    // Mutation in the scaffold
-                    for (let m = 0; m < mutations.length; m++) {
-                        let start = gene.start
-
-                        // Among previous gene end and current gene start
-                        if (mutations[m].BP > previousPoint && mutations[m].BP < start) {
-                            geneCompress(previousPoint, mutations[m].BP, false)
                             drawMutation(mutations[m])
 
-                            while (m + 1 < mutations.length && mutations[m + 1].BP < start) {
-                                m++
-                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false)
-                                drawMutation(mutations[m])
-                            }
-
-                            geneCompress(mutations[m].BP, start, false)
-                            hasMutation = true
-
-                            // If next mutation is not in the current gene or no more mutation
-                            if (
-                                (m + 1 < mutations.length && mutations[m + 1].BP > gene.end) ||
-                                m + 1 >= mutations.length
+                            while (
+                                m + 1 < mutations.length &&
+                                mutations[m + 1].BP > start &&
+                                mutations[m + 1].BP < gene.end
                             ) {
-                                geneCompress(start, gene.end, true, gene.name, gene.start, gene.end)
-                            }
-                        }
-
-                        // Among current gene start and end
-                        if (mutations[m].BP >= start && mutations[m].BP <= gene.end) {
-                            // current gene start is smaller than previous point
-                            if (previousPoint > start) {
-                                overlappingCal()
-                            } else if (!hasMutation) {
-                                geneCompress(previousPoint, start, false)
-                            }
-
-                            // Mutation is at the start point
-                            if (mutations[m].BP === start) {
-                                drawMutation(mutations[m])
-                            }
-
-                            // Mutation is among the gene start and end
-                            if (mutations[m].BP > start && mutations[m].BP < gene.end) {
+                                m++
                                 geneCompress(
-                                    start,
+                                    mutations[m - 1].BP,
                                     mutations[m].BP,
                                     true,
                                     gene.name,
@@ -671,93 +711,69 @@ export class ScaffoldSequenceComponent {
                                     gene.end
                                 )
                                 drawMutation(mutations[m])
-
-                                while (
-                                    m + 1 < mutations.length &&
-                                    mutations[m + 1].BP > start &&
-                                    mutations[m + 1].BP < gene.end
-                                ) {
-                                    m++
-                                    geneCompress(
-                                        mutations[m - 1].BP,
-                                        mutations[m].BP,
-                                        true,
-                                        gene.name,
-                                        gene.start,
-                                        gene.end
-                                    )
-                                    drawMutation(mutations[m])
-                                }
-                            }
-
-                            geneCompress(
-                                mutations[m].BP,
-                                gene.end,
-                                true,
-                                gene.name,
-                                gene.start,
-                                gene.end,
-                                overlapping
-                            )
-
-                            // Mutation is at the end point
-                            if (mutations[m].BP === gene.end) {
-                                drawMutation(mutations[m])
-                            }
-
-                            hasMutation = true
-                            if (geneHasMutation.includes(gene.name) === false) {
-                                geneHasMutation.push(gene.name)
                             }
                         }
 
-                        // mutation is among the last gene end and scaffold end
-                        if (g === lastGene && mutations[m].BP > gene.end) {
-                            geneCompress(gene.end, mutations[m].BP, false)
+                        geneCompress(
+                            mutations[m].BP,
+                            gene.end,
+                            true,
+                            gene.name,
+                            gene.start,
+                            gene.end,
+                            overlapping
+                        )
+
+                        // Mutation is at the end point
+                        if (mutations[m].BP === gene.end) {
                             drawMutation(mutations[m])
-                            while (m + 1 < mutations.length && mutations[m].BP > gene.end) {
-                                m++
-                                geneCompress(mutations[m - 1].BP, mutations[m].BP, false)
-                                drawMutation(mutations[m])
-                            }
+                        }
+
+                        hasMutation = true
+                        if (geneHasMutation.includes(gene.name) === false) {
+                            geneHasMutation.push(gene.name)
+                        }
+                    }
+
+                    // mutation is among the last gene end and scaffold end
+                    if (g === lastGene && mutations[m].BP > gene.end) {
+                        geneCompress(gene.end, mutations[m].BP, false)
+                        drawMutation(mutations[m])
+                        while (m + 1 < mutations.length && mutations[m].BP > gene.end) {
+                            m++
+                            geneCompress(mutations[m - 1].BP, mutations[m].BP, false)
+                            drawMutation(mutations[m])
+                        }
+                        endSquare = true
+                        hasMutation = true
+                        muInLastGene = true
+                        geneCompress(mutations[m].BP, data.length, false)
+                    }
+                }
+
+                // Current gene do not have mutation
+                if (!hasMutation) {
+                    if (previousPoint > gene.start) {
+                        overlappingCal()
+                    } else {
+                        geneCompress(previousPoint, gene.start, false)
+                        if (gene.end === data.length) {
                             endSquare = true
-                            hasMutation = true
-                            muInLastGene = true
-                            geneCompress(mutations[m].BP, data[i].length, false)
                         }
-                    }
-
-                    // Current gene do not have mutation
-                    if (!hasMutation) {
-                        if (previousPoint > gene.start) {
-                            overlappingCal()
-                        } else {
-                            geneCompress(previousPoint, gene.start, false)
-                            if (gene.end === data[i].length) {
-                                endSquare = true
-                            }
-                            geneCompress(
-                                gene.start,
-                                gene.end,
-                                true,
-                                gene.name,
-                                gene.start,
-                                gene.end
-                            )
-                        }
+                        geneCompress(gene.start, gene.end, true, gene.name, gene.start, gene.end)
                     }
                 }
+            })
 
-                // The last compression
-                if (data[i].gene[lastGene].end < data[i].length) {
-                    endSquare = true
-                    if (!muInLastGene) {
-                        geneCompress(data[i].gene[lastGene].end, data[i].length, false)
-                    }
+            // The last compression
+            if (data.gene[lastGene].end < data.length) {
+                endSquare = true
+                if (!muInLastGene) {
+                    geneCompress(data.gene[lastGene].end, data.length, false)
                 }
-                this.sequenceExpr.geneHasMu(geneHasMutation)
-                this.geneHasMu = geneHasMutation
             }
+            this.sequenceExpr.geneHasMu(geneHasMutation)
+            this.geneHasMu = geneHasMutation
             if (this.highlight) this.showGeneHasMu(true)
         })
     }
