@@ -264,7 +264,8 @@ export class ScaffoldSequenceComponent {
         details: string,
         last: any,
         lastPosition: any,
-        geneName: string
+        geneName: string,
+        overlap: number = 0
     ) {
         let geneRename = 'seq-' + geneName.replace(/[^\w\s]|_/g, '').toLowerCase()
         const rectangle = svg
@@ -360,12 +361,22 @@ export class ScaffoldSequenceComponent {
             let squareWidth = this.squareWidth
             let compressionNum = this.compressionNum
             let squareHeight = squareWidth
-            let margin = { top: 20, right: 30, bottom: 60, left: 90 }
-            let width = this.width
-                ? squareWidth <= 5
-                    ? this.width - 10 * 10
-                    : this.width - 10 * squareWidth
-                : 1000
+            let margin = { top: 10, right: 30, bottom: 60, left: 90 }
+            let width = 1000
+
+            if (this.width) {
+                if (squareWidth <= 6) {
+                    width = this.width - margin.bottom - margin.top
+                } else if (squareWidth > 6 && squareWidth <= 14) {
+                    width = this.width - margin.top * squareWidth
+                } else if (squareWidth >= 15 && squareWidth <= 20) {
+                    width = this.width - margin.top * 2 - margin.bottom - squareWidth * 2.5
+                } else if (squareWidth >= 21 && squareWidth <= 24) {
+                    width = this.width - margin.top * 2 - margin.bottom - squareWidth * 3
+                } else if (squareWidth >= 25 && squareWidth <= 30) {
+                    width = this.width - margin.top * 3 - margin.bottom - squareWidth * 3.5
+                }
+            }
 
             // gene's location
             let X = 0
@@ -525,7 +536,8 @@ export class ScaffoldSequenceComponent {
                               `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
                               last,
                               lastPosition,
-                              geneName
+                              geneName,
+                              overlap
                           )
                         : this.drawRectangle(
                               svg,
@@ -560,7 +572,8 @@ export class ScaffoldSequenceComponent {
                               `Gene: ${geneName} &nbsp Start: ${geneStart} &nbsp End: ${geneEnd}`,
                               last,
                               lastPosition,
-                              geneName
+                              geneName,
+                              overlap
                           )
                         : this.drawRectangle(
                               svg,
