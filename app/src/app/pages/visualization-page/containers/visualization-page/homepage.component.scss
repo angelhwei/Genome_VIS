@@ -13,10 +13,30 @@
     border-radius: 28px;
     overflow-x: hidden;
 }
+.gene-exp-container{
+    overflow-y: hidden;
+}
 .sequence-container,
 .map-container {
     overflow-y: auto;
 }
+
+.barchart-container,
+.sequence-container {
+    z-index: 100;
+    // background-color: #eaeaea;
+}
+
+.sequence-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.sequence-container {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
 .container {
     height: 95vh;
     display: grid;
@@ -70,26 +90,6 @@
     color: black;
     font-weight: 1000;
 }
-
-.barchart-container,
-.sequence-container {
-    z-index: 100;
-    // background-color: #eaeaea;
-}
-
-.sequence-container::-webkit-scrollbar {
-    display: none;
-}
-
-/* Hide scrollbar for IE, Edge and Firefox */
-.sequence-container {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-}
-
-// .barchart-container {
-//     overflow-y: hidden;
-// }
 
 :host ::ng-deep .mdc-text-field--outlined {
     --mdc-outlined-text-field-container-shape: 28px;
