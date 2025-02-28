@@ -1,7 +1,8 @@
-import { Component, OnInit, EventEmitter, Output, Input } from '@angular/core'
+import { Component, OnInit, EventEmitter, Output, Input, Inject, PLATFORM_ID } from '@angular/core'
 import * as d3 from 'd3'
-import { DataService } from '../../../../services/data.service'
-import { ShareService } from '../../../../services/share.service'
+import { DataService } from '@services/data.service'
+import { ShareService } from '@services/share.service'
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
     selector: 'app-scaffold-barchart',
@@ -15,17 +16,19 @@ export class ScaffoldBarchartComponent implements OnInit {
     @Input() width!: number
     @Input() height!: number
     data: any
-    constructor(private dataService: DataService, private shareService: ShareService) {}
+    constructor(private dataService: DataService, private shareService: ShareService, @Inject(PLATFORM_ID) private platformId: Object) {}
 
     ngOnChanges() {
         this.barchart(this.data)
     }
 
     ngOnInit() {
-        this.dataService.fetchData().then(data => {
+      if (isPlatformBrowser(this.platformId)) {
+        this.dataService.fetchData().subscribe(data => {
             this.barchart(data)
             this.data = data
         })
+      }
     }
 
     barchart(data: any) {

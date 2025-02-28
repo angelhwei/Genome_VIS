@@ -13,7 +13,6 @@ import { MatTooltipModule } from '@angular/material/tooltip'
 import { MatExpansionModule } from '@angular/material/expansion'
 import { MatNativeDateModule } from '@angular/material/core'
 // import { FormControl, ReactiveFormsModule } from '@angular/forms'
-import { ThemePalette } from '@angular/material/core'
 
 @Component({
     selector: 'app-homepage',

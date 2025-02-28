@@ -1,10 +1,11 @@
-import { Component, OnInit, Input, NgModule, Output, EventEmitter } from '@angular/core'
+import { Component, OnInit, Input, Output, EventEmitter, Inject, PLATFORM_ID } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { MapComponent } from '../map/map.component'
-import { GeneExpDataService } from '../../../../services/gene-exp-data.service'
-import { SequenceExpressionService } from '../../../../services/sequence-expression.service'
-import { DataService } from '../../../../services/data.service'
+import { GeneExpDataService } from '@services/gene-exp-data.service'
+import { SequenceExpressionService } from '@services/sequence-expression.service'
+import { DataService } from '@services/data.service'
 import * as d3 from 'd3'
+import { isPlatformBrowser } from '@angular/common';
 
 interface MarkerProperties {
     position: { lat: number; lng: number }
@@ -40,11 +41,13 @@ export class GeneExpressionComponent implements OnInit {
     constructor(
         private geneExpDataService: GeneExpDataService,
         private sequenceExpr: SequenceExpressionService,
-        private dataService: DataService
+        private dataService: DataService,
+        @Inject(PLATFORM_ID) private platformId: Object
     ) {}
 
     ngOnInit(): void {
-        this.geneExpDataService.fetchGeneExpData().then(data => {
+      if (isPlatformBrowser(this.platformId)) {
+        this.geneExpDataService.fetchGeneExpData().subscribe(data => {
             this.parallelCoordinates(data)
             this.data = data
         })
@@ -59,9 +62,10 @@ export class GeneExpressionComponent implements OnInit {
                 this.geneHasMutation(data)
             }
         })
-        this.dataService.fetchData().then(data => {
+        this.dataService.fetchData().subscribe(data => {
             this.geneData = data
         })
+      }
     }
 
     geneHasMutation(geneHasMu: string[] = []) {

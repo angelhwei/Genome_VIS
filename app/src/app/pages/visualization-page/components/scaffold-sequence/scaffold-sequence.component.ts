@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ElementRef, ViewChild } from '@angular/core'
+import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, Inject, PLATFORM_ID } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import * as d3 from 'd3'
 import { MatButtonModule } from '@angular/material/button'
@@ -8,16 +8,17 @@ import { MatIconModule } from '@angular/material/icon'
 import { MatExpansionModule } from '@angular/material/expansion'
 import { MatNativeDateModule } from '@angular/material/core'
 import { MatFormFieldModule } from '@angular/material/form-field'
-import { ShareService } from '../../../../services/share.service'
-import { DataService } from '../../../../services/data.service'
+import { ShareService } from '@services/share.service'
+import { DataService } from '@services/data.service'
 import { FormControl, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { ThemePalette } from '@angular/material/core'
-import { SequenceExpressionService } from '../../../../services/sequence-expression.service'
+import { SequenceExpressionService } from '@services/sequence-expression.service'
 import { merge } from 'rxjs'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 import { MatCheckboxModule } from '@angular/material/checkbox'
-import { GeneExpDataService } from '../../../../services/gene-exp-data.service'
+import { GeneExpDataService } from '@services/gene-exp-data.service'
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
     selector: 'app-scaffold-sequence',
@@ -67,7 +68,8 @@ export class ScaffoldSequenceComponent {
         private shareService: ShareService,
         private dataService: DataService,
         private sequenceExpr: SequenceExpressionService,
-        private geneExpDataService: GeneExpDataService
+        private geneExpDataService: GeneExpDataService,
+        @Inject(PLATFORM_ID) private platformId: Object
     ) {
         merge(
             this.squareSize.statusChanges,
@@ -80,15 +82,17 @@ export class ScaffoldSequenceComponent {
     }
 
     ngOnInit() {
+      if (isPlatformBrowser(this.platformId)) {
         this.shareService.currentData.subscribe(data => {
             if (data) {
                 this.scaffold = data.scaffold
                 this.handleData()
             }
         })
-        this.geneExpDataService.fetchGeneExpData().then(data => {
+        this.geneExpDataService.fetchGeneExpData().subscribe(data => {
             this.expGeneData = data.map((d: any) => d.Gene)
         })
+      }
     }
 
     geneInExp(genes: any) {
@@ -355,8 +359,9 @@ export class ScaffoldSequenceComponent {
     }
 
     handleData() {
-        this.dataService.fetchData().then(data => {
+        this.dataService.fetchData().subscribe(data => {
             data = data.filter((d: any) => d.chromosome == this.scaffold)[0]
+            console.log("data:", data)
             this.geneInExp(data)
             let squareWidth = this.squareWidth
             let compressionNum = this.compressionNum
@@ -377,6 +382,8 @@ export class ScaffoldSequenceComponent {
                     width = this.width - margin.top * 3 - margin.bottom - squareWidth * 3.5
                 }
             }
+
+            width = (width/squareWidth) * squareWidth
 
             // gene's location
             let X = 0

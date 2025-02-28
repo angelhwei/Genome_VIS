@@ -1,7 +1,8 @@
-import { Component, OnInit, ViewChild, Output, EventEmitter } from '@angular/core'
+import { Component, OnInit, ViewChild, Output, EventEmitter, Inject, PLATFORM_ID } from '@angular/core'
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps'
-import { MapDataService } from '../../../../services/map-data.service'
+import { MapDataService } from '@services/map-data.service'
 import { CommonModule } from '@angular/common'
+import { isPlatformBrowser } from '@angular/common';
 
 interface MarkerProperties {
     position: {
@@ -23,7 +24,7 @@ interface MarkerProperties {
 })
 export class MapComponent implements OnInit {
     @Output() pinClicked = new EventEmitter<MarkerProperties>()
-    constructor(private mapDataService: MapDataService) {
+    constructor(private mapDataService: MapDataService, @Inject(PLATFORM_ID) private platformId: Object) {
         this.center = { lat: 48.8606, lng: 2.3376 }
     }
 
@@ -47,7 +48,8 @@ export class MapComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.mapDataService.fetchData().then((data: any) => {
+      if (isPlatformBrowser(this.platformId)) {
+        this.mapDataService.fetchData().subscribe((data: any) => {
             data.forEach((data: any) => {
                 let lat = parseFloat(data.Latitude)
                 let lng = parseFloat(data.Longitude)
@@ -68,6 +70,7 @@ export class MapComponent implements OnInit {
                 }
             })
         })
+      }
     }
 
     getIconOptions(marker: MarkerProperties): google.maps.MarkerOptions {
