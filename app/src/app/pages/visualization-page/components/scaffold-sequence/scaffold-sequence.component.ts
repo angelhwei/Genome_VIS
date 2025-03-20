@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, Inject, PLATFORM_ID } from '@angular/core'
+import {
+    Component,
+    Input,
+    Output,
+    EventEmitter,
+    ElementRef,
+    ViewChild,
+    Inject,
+    PLATFORM_ID,
+} from '@angular/core'
 import { CommonModule } from '@angular/common'
 import * as d3 from 'd3'
 import { MatButtonModule } from '@angular/material/button'
@@ -18,7 +27,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 import { MatCheckboxModule } from '@angular/material/checkbox'
 import { GeneExpDataService } from '@services/gene-exp-data.service'
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common'
 
 @Component({
     selector: 'app-scaffold-sequence',
@@ -82,17 +91,20 @@ export class ScaffoldSequenceComponent {
     }
 
     ngOnInit() {
-      if (isPlatformBrowser(this.platformId)) {
-        this.shareService.currentData.subscribe(data => {
-            if (data) {
-                this.scaffold = data.scaffold
-                this.handleData()
-            }
-        })
-        this.geneExpDataService.fetchGeneExpData().subscribe(data => {
-            this.expGeneData = data.map((d: any) => d.Gene)
-        })
-      }
+        if (isPlatformBrowser(this.platformId)) {
+            this.shareService.currentData.subscribe(data => {
+                if (data) {
+                    this.scaffold = data.scaffold
+                    this.handleData()
+                }else{
+                    this.scaffold = ''
+                    console.log('No data')
+                }
+            })
+            this.geneExpDataService.fetchGeneExpData().subscribe(data => {
+                this.expGeneData = data.map((d: any) => d.Gene)
+            })
+        }
     }
 
     geneInExp(genes: any) {
@@ -361,7 +373,7 @@ export class ScaffoldSequenceComponent {
     handleData() {
         this.dataService.fetchData().subscribe(data => {
             data = data.filter((d: any) => d.chromosome == this.scaffold)[0]
-            console.log("data:", data)
+            console.log('data:', data)
             this.geneInExp(data)
             let squareWidth = this.squareWidth
             let compressionNum = this.compressionNum
@@ -383,7 +395,7 @@ export class ScaffoldSequenceComponent {
                 }
             }
 
-            width = (width/squareWidth) * squareWidth
+            width = (width / squareWidth) * squareWidth
 
             // gene's location
             let X = 0
