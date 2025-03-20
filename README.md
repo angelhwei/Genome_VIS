@@ -22,8 +22,8 @@ VariaVisio is a genomic visualization system designed for population genomics re
 ### Setup Instructions
 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/VariaVisio.git
-cd VariaVisio
+git clone https://github.com/angelhwei/Genome_VIS.git
+cd app
 ```
 2. Install dependencies
 ```bash
